@@ -6,10 +6,13 @@ package org.example
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.core.subcommands
+import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
+import org.example.SysPathUtil.commandExists
+import java.io.File
 
 class KolibriChannels : CliktCommand(name = "list-channels") {
     override fun run() = echo("TODO list all available channels")
@@ -19,22 +22,67 @@ class KolibriTopics : CliktCommand(name = "list-topics") {
     override val printHelpOnEmptyArgs = true
 
     val channelId by option("-channel-id", help = "The ID of the channel to list topics for").required()
-    val maxDepth by option("-r","--max-depth",help = "Maximum depth for recursive listing").int()
+    val maxDepth by option("-r", "--max-depth", help = "Maximum depth for recursive listing").int()
 
-    override fun run() = echo("TODO list topics for a kolibri channel $channelId")
+    override fun run() {
+        echo("TODO list topics for a kolibri channel $channelId")
+    }
 
 }
 
 class DownloadTopic : CliktCommand(name = "download-topic") {
     override val printHelpOnEmptyArgs = true
 
-    val channelId by option("-channel-id", help = "The channel ID").required()
-    val topicId by option("-topic-id", help = "The topic ID to download").required()
-    val output by option("-output",help = "The output directory for the xApi file").file(canBeFile = false, mustBeWritable = true)
-    val fileName by option("-name",help = "The name of the xApi file")
+    val channelId by option("-channel-id", help = "The channel ID")
+        .required()
 
+    val topicId by option("-topic-id", help = "The topic ID to download")
+        .required()
 
-    override fun run() = echo("TODO download the topic $topicId from channel $channelId in $output as $fileName")
+    val zimDumpPath by option(
+        "-zim-dump-path",
+        help = "The path to the zimdump binary - can be downloaded from https://download.openzim.org/release/zim-tools/"
+    ).file(mustExist = true, canBeDir = false)
+
+    val outputDir by option("-dir", "-output", help = "The output directory for the xApi file")
+        .file(canBeFile = false, mustBeWritable = true)
+        .default(File("."))
+
+    val fileName by option("-name", help = "The name of the xApi file")
+
+    override fun run() {
+        if (!commandExists("docker")) {
+            echo(
+                "docker not found. Please install it from https://docs.docker.com/get-docker/",
+                err = true
+            )
+            return
+        }
+        if (!commandExists("zimdump", zimDumpPath)) {
+            echo(
+                "zimdump not found. Please install it from https://download.openzim.org/release/zim-tools/",
+                err = true
+            )
+            return
+        }
+        echo("TODO download the topic $topicId from channel $channelId in $outputDir as $fileName")
+        val zimFile: File? = DownloadKolibriZimUseCase(channelId, topicId, outputDir, fileName ?: topicId).invoke()
+
+        if (zimFile == null) {
+            echo("Failed to download zim file", err = true)
+            return
+        }
+
+        // extract it to a folder,so we can easily zip it later
+        val extractedZimFolder = File(outputDir, fileName ?: topicId)
+        extractedZimFolder.mkdirs()
+
+        ExtractZimUseCase(zimFile, extractedZimFolder).invoke()
+
+        // fix any exceptions found in the folder
+        FixExtractZimExceptions(zimFile, extractedZimFolder).invoke()
+
+    }
 }
 
 class Khan2Xapi : CliktCommand(name = "khan") {
