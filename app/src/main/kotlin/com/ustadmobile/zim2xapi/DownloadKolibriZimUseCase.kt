@@ -2,14 +2,14 @@ package com.ustadmobile.zim2xapi
 
 import java.io.File
 
-class DownloadKolibriZimUseCase(
-    private val channelId: String,
-    private val topicId: String,
-    private val output: File,
-    private val fileName: String
-) {
+class DownloadKolibriZimUseCase {
 
-    operator fun invoke(): File? {
+    operator fun invoke(
+        channelId: String,
+        topicId: String,
+        output: File,
+        fileName: String
+    ): File? {
         return try {
             // used so that kolibri doesn't generate a random name
             val zimFileName = "$fileName.zim"

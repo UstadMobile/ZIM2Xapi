@@ -2,12 +2,12 @@ package com.ustadmobile.zim2xapi
 
 import java.io.File
 
-class ExtractZimUseCase(
-    val zimFile: File,
-    val output: File
-) {
+class ExtractZimUseCase {
 
-    operator fun invoke() {
+    operator fun invoke(
+        zimFile: File,
+        output: File
+    ) {
         try {
             // run zimDump to extract everything in the zim
             val zimDumpCommand = buildList {
@@ -23,7 +23,7 @@ class ExtractZimUseCase(
             process2.printBuffer()
             process2.waitFor()
 
-        }catch (e: Exception){
+        } catch (e: Exception) {
             println("Stack: ${e.stackTrace}")
             println("Error: ${e.message}")
         }

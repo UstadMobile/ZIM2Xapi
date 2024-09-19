@@ -66,7 +66,7 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
             return
         }
         echo("TODO download the topic $topicId from channel $channelId in $outputDir as $fileName")
-        val zimFile: File? = DownloadKolibriZimUseCase(channelId, topicId, outputDir, fileName ?: topicId).invoke()
+        val zimFile: File? = DownloadKolibriZimUseCase().invoke(channelId, topicId, outputDir, fileName ?: topicId)
 
         if (zimFile == null) {
             echo("Failed to download zim file", err = true)
@@ -77,10 +77,10 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
         val extractedZimFolder = File(outputDir, fileName ?: topicId)
         extractedZimFolder.mkdirs()
 
-        ExtractZimUseCase(zimFile, extractedZimFolder).invoke()
+        ExtractZimUseCase().invoke(zimFile, extractedZimFolder)
 
         // fix any exceptions found in the folder
-        FixExtractZimExceptions(zimFile, extractedZimFolder).invoke()
+        FixExtractZimExceptions().invoke(zimFile, extractedZimFolder)
 
     }
 }
