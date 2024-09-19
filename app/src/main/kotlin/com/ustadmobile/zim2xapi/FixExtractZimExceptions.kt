@@ -1,4 +1,4 @@
-package org.example
+package com.ustadmobile.zim2xapi
 
 import java.io.File
 import java.io.FileFilter
