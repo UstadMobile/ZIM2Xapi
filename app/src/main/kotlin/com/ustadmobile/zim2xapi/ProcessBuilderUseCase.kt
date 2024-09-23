@@ -4,7 +4,8 @@ class ProcessBuilderUseCase {
 
     operator fun invoke(
         command: String,
-        params: String
+        params: String,
+        printOutput: Boolean = true
     ): String {
         val commandList = buildList {
             addAll(command.split(whiteSpaceRegex.toRegex()))
@@ -18,7 +19,7 @@ class ProcessBuilderUseCase {
 
         process.inputStream.bufferedReader().use {
             it.lines().forEach { line ->
-                println(line) // Print each line
+                if(printOutput) println(line) // Print each line
                 outputBuilder.append(line).append("\n")
             }
         }

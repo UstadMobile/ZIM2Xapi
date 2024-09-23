@@ -1,18 +1,7 @@
 package com.ustadmobile.zim2xapi
 
 import java.io.File
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 
-val mimeExtensionMap = mapOf(
-    "text/html" to ".html",
-    "image/jpeg" to ".jpg",
-    "image/png" to ".png",
-    "text/plain" to ".txt",
-    "application/pdf" to ".pdf",
-    "application/javascript" to ".js",
-    "text/css" to ".css"
-)
 
 fun isWindowsOs(osName: String = System.getProperty("os.name") ?: ""): Boolean {
     return osName.lowercase().contains("win")
@@ -20,38 +9,6 @@ fun isWindowsOs(osName: String = System.getProperty("os.name") ?: ""): Boolean {
 
 fun isLinuxOs(osName: String = System.getProperty("os.name") ?: ""): Boolean {
     return osName.lowercase().let { it.contains("linux") || it.contains("nix") }
-}
-
-fun File.getMimeType(): String? {
-    return Files.probeContentType(toPath())
-}
-
-fun File.moveFileToFolder(destination: File) {
-    Files.move(
-        toPath(),
-        destination.toPath(),
-        StandardCopyOption.REPLACE_EXISTING
-    )
-}
-
-fun File.renameFileBasedOnMimeType(mimeType: String? = getMimeType()) {
-    if (mimeType == null) {
-        println("Could not determine MIME type for file: $name")
-        return
-    }
-
-    // Get the appropriate extension based on the MIME type
-    val extension = mimeExtensionMap[mimeType]
-    if (extension != null) {
-        val newFileName = absolutePath + extension
-        val newFile = File(newFileName)
-
-        // Rename the file
-        moveFileToFolder(newFile)
-        println("Renamed $name to ${newFile.name}")
-    } else {
-        println("No known extension for MIME type: $mimeType for file: $name")
-    }
 }
 
 /**

@@ -59,6 +59,8 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
 
     override fun run() {
 
+        val processBuilderUseCase = ProcessBuilderUseCase()
+
         // zimDump required to extract the ZIM file
         if (!commandExists("zimdump", zimDumpPath)) {
             echo(
@@ -82,7 +84,7 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
                 return
             }
 
-            DownloadKolibriZimUseCase().invoke(channelId, topicId, outputDir, fileName ?: topicId)
+            DownloadKolibriZimUseCase(processBuilderUseCase).invoke(channelId, topicId, outputDir, fileName ?: topicId)
         } else {
             echo("You must provide either a ZIM file or a Kolibri channel ID and topic.", err = true)
             return
@@ -92,10 +94,10 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
         val extractedZimFolder = File(outputDir, fileName ?: createdZimFile.nameWithoutExtension)
         extractedZimFolder.mkdirs()
 
-        ExtractZimUseCase().invoke(createdZimFile, extractedZimFolder)
+        ExtractZimUseCase(processBuilderUseCase).invoke(createdZimFile, extractedZimFolder)
 
         // fix any exceptions found in the folder
-        FixExtractZimExceptions(ProcessBuilderUseCase()).invoke(createdZimFile, extractedZimFolder)
+        FixExtractZimExceptions(processBuilderUseCase).invoke(createdZimFile, extractedZimFolder)
 
     }
 }

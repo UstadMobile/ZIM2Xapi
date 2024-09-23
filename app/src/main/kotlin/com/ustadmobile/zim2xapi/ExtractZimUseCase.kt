@@ -2,31 +2,15 @@ package com.ustadmobile.zim2xapi
 
 import java.io.File
 
-class ExtractZimUseCase {
+class ExtractZimUseCase(private val process: ProcessBuilderUseCase) {
 
     operator fun invoke(
         zimFile: File,
         output: File
     ) {
-        try {
-            // run zimDump to extract everything in the zim
-            val zimDumpCommand = buildList {
-                add("zimdump")
-                add("dump")
-                // Specify the directory where the dump output will be written
-                add("--dir=${output.absolutePath}")
-                // The ZIM file to be dumped
-                add(zimFile.absolutePath)
-            }
-
-            val process2 = ProcessBuilder(zimDumpCommand).directory(output).start()
-            process2.printBuffer()
-            process2.waitFor()
-
-        } catch (e: Exception) {
-            println("Stack: ${e.stackTrace}")
-            println("Error: ${e.message}")
-        }
+        process.invoke(
+            "zimdump",
+            "dump --dir=${output.absolutePath} ${zimFile.absolutePath}"
+        )
     }
-
 }

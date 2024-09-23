@@ -18,11 +18,13 @@ class FixExtractZimExceptions(private val process: ProcessBuilderUseCase) {
             return
         }
 
+        // get the mainpage of the zim and rename it to index.html
         val infoOutput = process.invoke("zimdump", "info ${zimFile.absolutePath}")
         val mainPageLine = infoOutput.lines().find { it.trim().startsWith("main page:") }
         val mainPage = mainPageLine?.split(":")?.get(1)?.trim()
             ?: throw Exception("Zim mainPage not provided by zimdump")
 
+        // it will be located in either of these folders
         val mainPageFile = File(zimFolder, mainPage)
         val mainFile = File(exceptionsFolder, mainPage)
 
@@ -32,8 +34,12 @@ class FixExtractZimExceptions(private val process: ProcessBuilderUseCase) {
             else -> throw Exception("Zim main page not found in extracted folder")
         }
 
-        fileToRename.renameTo(File(zimFolder, INDEX_HTML))
+        val successRename = fileToRename.renameTo(File(zimFolder, INDEX_HTML))
+        if(!successRename){
+            throw Exception("Failed to rename $mainPage to $INDEX_HTML")
+        }
 
+        // fix each file found in exceptions folder
         exceptionsFolder.walkTopDown().forEach { file ->
             if (file.isFile) {
                 val decodedPath = URLDecoder.decode(file.name, "UTF-8")
