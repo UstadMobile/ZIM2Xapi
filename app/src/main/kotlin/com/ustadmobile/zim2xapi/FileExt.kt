@@ -26,6 +26,14 @@ fun File.getMimeType(): String? {
     return Files.probeContentType(toPath())
 }
 
+fun File.moveFileToFolder(destination: File) {
+    Files.move(
+        toPath(),
+        destination.toPath(),
+        StandardCopyOption.REPLACE_EXISTING
+    )
+}
+
 fun File.renameFileBasedOnMimeType(mimeType: String? = getMimeType()) {
     if (mimeType == null) {
         println("Could not determine MIME type for file: $name")
@@ -39,7 +47,7 @@ fun File.renameFileBasedOnMimeType(mimeType: String? = getMimeType()) {
         val newFile = File(newFileName)
 
         // Rename the file
-        Files.move(toPath(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        moveFileToFolder(newFile)
         println("Renamed $name to ${newFile.name}")
     } else {
         println("No known extension for MIME type: $mimeType for file: $name")
@@ -58,8 +66,8 @@ fun File.getCommandFile(
     val isWin = isWindowsOs(osName)
     return when {
         exists() -> this
-        isWin && File(parent,"$name.exe").exists() -> File(parent,"$name.exe")
-        isWin && File(parent, "$name.bat").exists() -> File(parent,"$name.bat")
+        isWin && File(parent, "$name.exe").exists() -> File(parent, "$name.exe")
+        isWin && File(parent, "$name.bat").exists() -> File(parent, "$name.bat")
         else -> null
     }
 }

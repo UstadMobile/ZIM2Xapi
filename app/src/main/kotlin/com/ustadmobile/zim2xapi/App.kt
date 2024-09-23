@@ -34,30 +34,32 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
     override val printHelpOnEmptyArgs = true
 
     val channelId by option("-channel-id", help = "The channel ID")
-        .required()
 
     val topicId by option("-topic-id", help = "The topic ID to download")
-        .required()
 
     val zimDumpPath by option(
         "-zim-dump-path",
         help = "The path to the zimdump binary - can be downloaded from https://download.openzim.org/release/zim-tools/"
     ).file(mustExist = true, canBeDir = false)
 
+    val zimFile by option("-zim-file", help = "Path to an existing ZIM file")
+        .file(mustExist = true, canBeDir = false, mustBeReadable = true)
+
+    val kolibiri2zimPath by option(
+        "-kolibri2zim-path",
+        help = "The path to the kolibri2zim binary - can be downloaded from https://github.com/openzim/kolibri"
+    ).file(mustExist = true, canBeDir = false)
+
+
     val outputDir by option("-dir", "-output", help = "The output directory for the xApi file")
         .file(canBeFile = false, mustBeWritable = true)
-        .default(File("."))
+        .default(File(".").canonicalFile)
 
     val fileName by option("-name", help = "The name of the xApi file")
 
     override fun run() {
-        if (!commandExists("docker")) {
-            echo(
-                "docker not found. Please install it from https://docs.docker.com/get-docker/",
-                err = true
-            )
-            return
-        }
+
+        // zimDump required to extract the ZIM file
         if (!commandExists("zimdump", zimDumpPath)) {
             echo(
                 "zimdump not found. Please install it from https://download.openzim.org/release/zim-tools/",
@@ -65,22 +67,35 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
             )
             return
         }
-        echo("TODO download the topic $topicId from channel $channelId in $outputDir as $fileName")
-        val zimFile: File? = DownloadKolibriZimUseCase().invoke(channelId, topicId, outputDir, fileName ?: topicId)
 
-        if (zimFile == null) {
-            echo("Failed to download zim file", err = true)
+        val channelId = channelId
+        val topicId = topicId
+        val zimFile = zimFile
+
+        val createdZimFile: File = zimFile ?: if (channelId != null && topicId != null) {
+
+            if (!commandExists("kolibri2zim", kolibiri2zimPath) && !commandExists("docker")) {
+                echo(
+                    "kolibri2zim or docker not found. Please install it from https://github.com/openzim/kolibri or https://docs.docker.com/get-docker/",
+                    err = true
+                )
+                return
+            }
+
+            DownloadKolibriZimUseCase().invoke(channelId, topicId, outputDir, fileName ?: topicId)
+        } else {
+            echo("You must provide either a ZIM file or a Kolibri channel ID and topic.", err = true)
             return
         }
 
         // extract it to a folder,so we can easily zip it later
-        val extractedZimFolder = File(outputDir, fileName ?: topicId)
+        val extractedZimFolder = File(outputDir, fileName ?: createdZimFile.nameWithoutExtension)
         extractedZimFolder.mkdirs()
 
-        ExtractZimUseCase().invoke(zimFile, extractedZimFolder)
+        ExtractZimUseCase().invoke(createdZimFile, extractedZimFolder)
 
         // fix any exceptions found in the folder
-        FixExtractZimExceptions().invoke(zimFile, extractedZimFolder)
+        FixExtractZimExceptions(ProcessBuilderUseCase()).invoke(createdZimFile, extractedZimFolder)
 
     }
 }

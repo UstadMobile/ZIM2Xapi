@@ -5,7 +5,7 @@ import java.io.File
 
 object SysPathUtil {
 
-    private fun findCommandInPath(
+    fun findCommandInPath(
         commandName: String,
         manuallySpecifiedLocation: File? = null,
         pathVar: String = System.getenv("PATH") ?: "",

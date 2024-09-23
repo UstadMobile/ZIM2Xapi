@@ -1,15 +1,16 @@
 package com.ustadmobile.zim2xapi
 
 import java.io.File
+import java.io.FileNotFoundException
 
 class DownloadKolibriZimUseCase {
 
     operator fun invoke(
         channelId: String,
         topicId: String,
-        output: File,
+        outputDir: File,
         fileName: String
-    ): File? {
+    ): File {
         return try {
             // used so that kolibri doesn't generate a random name
             val zimFileName = "$fileName.zim"
@@ -22,7 +23,7 @@ class DownloadKolibriZimUseCase {
                 add(fileName)
                 // Volume mapping between the host and the container
                 add("-v")
-                add("${output.absolutePath}:/output")
+                add("${outputDir.absolutePath}:/output")
                 // Docker image to use (openzim Kolibri image)
                 add("ghcr.io/openzim/kolibri")
                 // Command to execute inside the container
@@ -45,22 +46,18 @@ class DownloadKolibriZimUseCase {
             }
 
             println("Running: ${zimCommand.joinToString(" ")}")
-            val process = ProcessBuilder(zimCommand).directory(output).start()
+            val process = ProcessBuilder(zimCommand).directory(outputDir).start()
             process.printBuffer()
             process.waitFor()
 
-            val zimFile = File(output, zimFileName)
+            val zimFile = File(outputDir, zimFileName)
 
             if (!zimFile.exists()) {
-                throw Exception("Zim file not found")
+                throw FileNotFoundException("Zim file not found")
             }
 
             zimFile
-        }catch (e: Exception){
-            println("Stack: ${e.cause}")
-            println("Error: ${e.message}")
-            null
-        }finally {
+        } finally {
             val stopCommand = "docker stop $fileName".split(" ")
             ProcessBuilder(stopCommand).start().waitFor()
             // Remove the container
