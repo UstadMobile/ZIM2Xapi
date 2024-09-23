@@ -49,6 +49,15 @@ class FixExtractZimExceptions(private val process: ProcessBuilderUseCase) {
 
             }
         }
+
+        // check folder is empty
+        if(exceptionsFolder.listFiles()?.isNotEmpty() == true){
+            throw Exception("Cannot proceed: There are unprocessed files in the exceptions folder")
+        }else{
+            if (!exceptionsFolder.delete()) {
+                throw Exception("Failed to delete the exceptions folder: ${exceptionsFolder.absolutePath}. Check if the folder is empty and accessible.")
+            }
+        }
     }
 
     companion object {
