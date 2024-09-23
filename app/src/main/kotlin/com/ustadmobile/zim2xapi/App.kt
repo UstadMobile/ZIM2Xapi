@@ -76,15 +76,16 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
 
         val createdZimFile: File = zimFile ?: if (channelId != null && topicId != null) {
 
-            if (!commandExists("kolibri2zim", kolibiri2zimPath) && !commandExists("docker")) {
-                echo(
-                    "kolibri2zim or docker not found. Please install it from https://github.com/openzim/kolibri or https://docs.docker.com/get-docker/",
-                    err = true
-                )
-                return
-            }
+            val isKolibriAvailable = GetKolibri2ZimUseCase(processBuilderUseCase)
+                .isKolibriAvailable(kolibiri2zimPath)
 
-            DownloadKolibriZimUseCase(processBuilderUseCase).invoke(channelId, topicId, outputDir, fileName ?: topicId)
+            DownloadKolibriZimUseCase(processBuilderUseCase).invoke(
+                channelId,
+                topicId,
+                outputDir,
+                fileName ?: topicId,
+                isKolibriAvailable
+            )
         } else {
             echo("You must provide either a ZIM file or a Kolibri channel ID and topic.", err = true)
             return
@@ -96,11 +97,13 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
         val extractedZimFolder = File(outputDir, fileName)
         extractedZimFolder.mkdirs()
 
+        // extract the zim
         ExtractZimUseCase(processBuilderUseCase).invoke(createdZimFile, extractedZimFolder)
 
         // fix any exceptions found in the folder
         FixExtractZimExceptions(processBuilderUseCase).invoke(createdZimFile, extractedZimFolder)
 
+        // create the xApi zip file
         CreateXapiFileUseCase().invoke(extractedZimFolder, outputDir, fileName)
 
     }
