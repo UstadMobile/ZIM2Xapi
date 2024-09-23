@@ -90,14 +90,18 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
             return
         }
 
+        val fileName = fileName ?: createdZimFile.nameWithoutExtension
+
         // extract it to a folder,so we can easily zip it later
-        val extractedZimFolder = File(outputDir, fileName ?: createdZimFile.nameWithoutExtension)
+        val extractedZimFolder = File(outputDir, fileName)
         extractedZimFolder.mkdirs()
 
         ExtractZimUseCase(processBuilderUseCase).invoke(createdZimFile, extractedZimFolder)
 
         // fix any exceptions found in the folder
         FixExtractZimExceptions(processBuilderUseCase).invoke(createdZimFile, extractedZimFolder)
+
+        CreateXapiFileUseCase().invoke(extractedZimFolder, outputDir, fileName)
 
     }
 }
