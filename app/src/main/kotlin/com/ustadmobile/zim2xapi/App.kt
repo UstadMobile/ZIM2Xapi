@@ -10,22 +10,48 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.file
-import com.github.ajalt.clikt.parameters.types.int
+import com.ustadmobile.zim2xapi.Client.client
+import com.ustadmobile.zim2xapi.Client.json
 import com.ustadmobile.zim2xapi.SysPathUtil.commandExists
+import kotlinx.serialization.json.Json
+import okhttp3.OkHttpClient
 import java.io.File
 
+object Client {
+    // Create a single OkHttpClient instance
+    val client: OkHttpClient by lazy {
+        OkHttpClient()
+    }
+
+    val json: Json by lazy {
+        Json {
+            ignoreUnknownKeys = true
+        }
+    }
+
+}
+
 class KolibriChannels : CliktCommand(name = "list-channels") {
-    override fun run() = echo("TODO list all available channels")
+    override fun run() {
+        ListKolibriChannelsUseCase(client, json).invoke()
+    }
 }
 
 class KolibriTopics : CliktCommand(name = "list-topics") {
     override val printHelpOnEmptyArgs = true
 
-    val channelId by option("-channel-id", help = "The ID of the channel to list topics for").required()
-    val maxDepth by option("-r", "--max-depth", help = "Maximum depth for recursive listing").int()
+    val id by option(
+        "-id", "-channel-id", "-topic-id",
+        help = "The ID of the channel to list topics for"
+    ).required()
 
     override fun run() {
-        echo("TODO list topics for a kolibri channel $channelId")
+        try {
+            ListKolibriTopicsUseCase(client, json).invoke(id)
+        } catch (e: Exception) {
+            echo(e.stackTrace, err = true)
+            echo(e.message, err = true)
+        }
     }
 
 }
@@ -76,6 +102,12 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
 
         val createdZimFile: File = zimFile ?: if (channelId != null && topicId != null) {
 
+            val isKhan = KhanChannels.channels.contains(channelId)
+            if(isKhan){
+                val licenseText = this::class.java.classLoader.getResource("khan-license-notice.txt")?.readText() ?: ""
+                echo(licenseText)
+            }
+
             val (cmdPath, isKolibriAvailable) = GetKolibri2ZimUseCase(processBuilderUseCase)
                 .isKolibriAvailable(kolibiri2zimPath)
 
@@ -108,6 +140,15 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
         CreateXapiFileUseCase(processBuilderUseCase).invoke(extractedZimFolder, outputDir, fileName, createdZimFile)
 
     }
+}
+
+object KhanChannels {
+
+    val channels: List<String> = listOf(
+        "c9d7f950ab6b5a1199e3d6c10d7f0103",
+        "6616efc8aa604a308c8f5d18b00a1ce3",
+    )
+
 }
 
 class Khan2Xapi : CliktCommand() {

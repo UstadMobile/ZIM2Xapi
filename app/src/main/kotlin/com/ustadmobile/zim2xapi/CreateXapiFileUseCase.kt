@@ -63,6 +63,7 @@ class CreateXapiFileUseCase(private val process: ProcessBuilderUseCase) {
 
         const val TINCAN_XML = "tincan.xml"
         const val INDEX_HTML = "index.html"
+        const val KHAN_LICENSE = "khan-license-notice.txt"
 
     }
 
