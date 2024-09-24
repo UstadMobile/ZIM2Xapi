@@ -110,7 +110,7 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
     }
 }
 
-class Khan2Xapi : CliktCommand(name = "khan") {
+class Khan2Xapi : CliktCommand() {
     override val printHelpOnEmptyArgs = true
     override fun run() = Unit
 }
