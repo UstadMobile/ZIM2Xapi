@@ -33,7 +33,7 @@ class CreateXapiFileUseCase(private val process: ProcessBuilderUseCase) {
             writer.println("""<?xml version="1.0" encoding="UTF-8"?>
            <tincan xmlns="http://projecttincan.com/tincan.xsd">
                 <activities>
-                    <activity id="https://ustadmobile.com/ns/zim2xapi/$uuid" type="http://activitystrea.ms/schema/1.0/game">
+                    <activity id="https://ustadmobile.com/ns/zim2xapi/$uuid" type="http://adlnet.gov/expapi/activities/module">
                         <name>$title</name>
                         <description lang="$lang">$description</description>
                         <launch lang="$lang">$INDEX_HTML</launch>
