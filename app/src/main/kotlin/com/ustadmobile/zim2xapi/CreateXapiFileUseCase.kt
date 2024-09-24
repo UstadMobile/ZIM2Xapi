@@ -8,12 +8,13 @@ import java.io.PrintWriter
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-class CreateXapiFileUseCase {
+class CreateXapiFileUseCase(private val process: ProcessBuilderUseCase) {
 
     operator fun invoke(
         zimFolder: File,
         outputFolder: File,
-        fileName: String
+        fileName: String,
+        zimFile: File
     ) {
 
         val indexHtml = File(zimFolder, INDEX_HTML)
@@ -22,12 +23,17 @@ class CreateXapiFileUseCase {
         val description = doc.select("meta[name=description]").attr("content")
         val lang = doc.select("html").attr("lang")
 
+        val output = process.invoke("zimdump","info ${zimFile.absolutePath}")
+        val uuidLine = output.lines().find { it.trim().startsWith("uuid:") }
+        val uuid = uuidLine?.split(":")?.get(1)?.trim()
+            ?: throw Exception("uuid not provided by zimdump")
+
         val tinCanFile = File(zimFolder, TINCAN_XML)
         PrintWriter(tinCanFile).use { writer ->
             writer.println("""<?xml version="1.0" encoding="UTF-8"?>
            <tincan xmlns="http://projecttincan.com/tincan.xsd">
                 <activities>
-                    <activity id="http://id.tincanapi.com/activity/tincan-prototypes/tetris" type="http://activitystrea.ms/schema/1.0/game">
+                    <activity id="https://ustadmobile.com/ns/zim2xapi/$uuid" type="http://activitystrea.ms/schema/1.0/game">
                         <name>$title</name>
                         <description lang="$lang">$description</description>
                         <launch lang="$lang">$INDEX_HTML</launch>

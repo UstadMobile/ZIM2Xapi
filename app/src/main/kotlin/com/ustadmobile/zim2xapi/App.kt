@@ -76,7 +76,7 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
 
         val createdZimFile: File = zimFile ?: if (channelId != null && topicId != null) {
 
-            val isKolibriAvailable = GetKolibri2ZimUseCase(processBuilderUseCase)
+            val (cmdPath, isKolibriAvailable) = GetKolibri2ZimUseCase(processBuilderUseCase)
                 .isKolibriAvailable(kolibiri2zimPath)
 
             DownloadKolibriZimUseCase(processBuilderUseCase).invoke(
@@ -84,7 +84,8 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
                 topicId,
                 outputDir,
                 fileName ?: topicId,
-                isKolibriAvailable
+                isKolibriAvailable,
+                cmdPath
             )
         } else {
             echo("You must provide either a ZIM file or a Kolibri channel ID and topic.", err = true)
@@ -104,7 +105,7 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
         FixExtractZimExceptions(processBuilderUseCase).invoke(createdZimFile, extractedZimFolder)
 
         // create the xApi zip file
-        CreateXapiFileUseCase().invoke(extractedZimFolder, outputDir, fileName)
+        CreateXapiFileUseCase(processBuilderUseCase).invoke(extractedZimFolder, outputDir, fileName, createdZimFile)
 
     }
 }

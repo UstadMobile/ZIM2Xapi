@@ -12,15 +12,15 @@ class GetKolibri2ZimUseCase(private val process: ProcessBuilderUseCase) {
      *
      * @throws Exception If neither `kolibri2zim` nor Docker is found in the system's path
      */
-    fun isKolibriAvailable(kolibri2zimPath: File?): Boolean {
+    fun isKolibriAvailable(kolibri2zimPath: File?): Pair<File, Boolean> {
         val kolibri2zimFile = SysPathUtil.findCommandInPath("kolibri2zim", kolibri2zimPath)
         if (kolibri2zimFile != null && runCommand(kolibri2zimFile)) {
-            return true
+            return Pair(kolibri2zimFile, true)
         }
 
         val dockerFile = SysPathUtil.findCommandInPath("docker")
         if (dockerFile != null && runCommand(dockerFile)) {
-            return false
+            return Pair(dockerFile, false)
         } else {
             throw Exception("kolibri2zim or docker not found. Please install it from https://github.com/openzim/kolibri or https://docs.docker.com/get-docker/")
         }

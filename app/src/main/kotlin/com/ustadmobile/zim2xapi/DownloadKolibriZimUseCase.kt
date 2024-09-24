@@ -12,7 +12,8 @@ class DownloadKolibriZimUseCase(
         topicId: String,
         outputDir: File,
         fileName: String,
-        isKolibriAvailable: Boolean
+        isKolibriAvailable: Boolean,
+        cmdPath: File
     ): File {
         return try {
             // used so that kolibri doesn't generate a random name
@@ -49,7 +50,7 @@ class DownloadKolibriZimUseCase(
                 add(topicId.substring(0, 10))
             }
             process.invoke(
-                if (isKolibriAvailable) Kolibri2Zim else DOCKER,
+                cmdPath.absolutePath,
                 zimCommand.joinToString(" ")
             )
 
