@@ -5,9 +5,10 @@ package com.ustadmobile.zim2xapi
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.main
-import com.github.ajalt.clikt.core.subcommands
-import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.core.subcommands
+import com.github.ajalt.clikt.parameters.options.convert
+import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.file
 import com.ustadmobile.zim2xapi.Client.client
@@ -28,16 +29,27 @@ object Client {
             ignoreUnknownKeys = true
         }
     }
-
 }
 
-class KolibriChannels : CliktCommand(name = "list-channels") {
+// share same option with multiple subcommands
+abstract class EndpointCommand(name: String) : CliktCommand(name) {
+    val endpoints by option("--endpoint", "-e")
+        .convert { it.split(",") }
+        .default(
+            listOf(
+                "https://kolibri-demo.learningequality.org",
+                "https://kolibri-catalog-en.learningequality.org"
+            )
+        )
+}
+
+class ListKolibriChannels : EndpointCommand(name = "list-channels") {
     override fun run() {
-        ListKolibriChannelsUseCase(client, json).invoke()
+        ListKolibriChannelsUseCase(client, json).invoke(endpoints)
     }
 }
 
-class KolibriTopics : CliktCommand(name = "list-topics") {
+class KolibriTopics : EndpointCommand(name = "list-topics") {
     override val printHelpOnEmptyArgs = true
 
     val id by option(
@@ -47,7 +59,7 @@ class KolibriTopics : CliktCommand(name = "list-topics") {
 
     override fun run() {
         try {
-            ListKolibriTopicsUseCase(client, json).invoke(id)
+            ListKolibriTopicsUseCase(client, json).invoke(id, endpoints)
         } catch (e: Exception) {
             echo(e.stackTrace, err = true)
             echo(e.message, err = true)
@@ -103,7 +115,7 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
         val createdZimFile: File = zimFile ?: if (channelId != null && topicId != null) {
 
             val isKhan = KhanChannels.channels.contains(channelId)
-            if(isKhan){
+            if (isKhan) {
                 val licenseText = this::class.java.classLoader.getResource("khan-license-notice.txt")?.readText() ?: ""
                 echo(licenseText)
             }
@@ -147,6 +159,11 @@ object KhanChannels {
     val channels: List<String> = listOf(
         "c9d7f950ab6b5a1199e3d6c10d7f0103",
         "6616efc8aa604a308c8f5d18b00a1ce3",
+        "f5b71417b1f657fca4d1aaecd23e4067",
+        "878ec2e6f88c5c268b1be6f202833cd4",
+        "2ac071c4672354f2aa78953448f81e50",
+        "c3231d844f8d5bb1b4cbc6a7ddd91eb7",
+        "a03496a6de095e7ba9d24291a487c78d",
     )
 
 }
@@ -159,7 +176,7 @@ class Khan2Xapi : CliktCommand() {
 fun main(args: Array<String>) {
     Khan2Xapi()
         .subcommands(
-            KolibriChannels(),
+            ListKolibriChannels(),
             KolibriTopics(),
             DownloadTopic()
         )

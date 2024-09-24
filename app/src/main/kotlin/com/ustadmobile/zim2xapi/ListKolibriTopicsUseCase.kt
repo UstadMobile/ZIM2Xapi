@@ -11,16 +11,11 @@ class ListKolibriTopicsUseCase(
 ) {
 
     operator fun invoke(
-        channelId: String
+        channelId: String,
+        endpoints: List<String>
     ) {
-        val topic = fetchTopic(channelId)
-
-        if (topic != null) {
-            displayTopicInfo(topic)
-        } else {
-            throw Exception("No Data found for channel/topic id $channelId")
-        }
-
+        val topic = fetchTopic(channelId, endpoints)
+        displayTopicInfo(topic)
     }
 
     fun displayTopicInfo(topic: Topic, depth: Int = 0) {
@@ -32,18 +27,24 @@ class ListKolibriTopicsUseCase(
         }
     }
 
-    private fun fetchTopic(id: String): Topic? {
-        val request = Request.Builder()
-            .url("https://kolibri-catalog-en.learningequality.org/api/content/contentnode_tree/$id/?include_coach_content=false")
-            .get()
-            .build()
+    private fun fetchTopic(id: String, endpoints: List<String>): Topic {
+        // expecting one url to throw a 404 or an error
+        endpoints.forEach {base ->
+            val request = Request.Builder()
+                .url("$base/api/content/contentnode_tree/$id/?include_coach_content=false")
+                .get()
+                .build()
 
-        client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) throw IOException("Unexpected code $response")
-
-            val responseData = response.body?.string() ?: return null
-            return json.decodeFromString(responseData)
+            try {
+                client.newCall(request).execute().use { response ->
+                    val responseData = response.body?.string() ?: return@forEach
+                    return json.decodeFromString(responseData)
+                }
+            }catch (e: Exception){
+                return@forEach
+            }
         }
+        throw IOException("unable to find data on topic")
     }
 
 }
