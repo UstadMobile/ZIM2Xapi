@@ -18,7 +18,7 @@ class ListKolibriTopicsUseCase(
         displayTopicInfo(topic)
     }
 
-    fun displayTopicInfo(topic: Topic, depth: Int = 0) {
+    private fun displayTopicInfo(topic: Topic, depth: Int = 0) {
         val indent = "  ".repeat(depth)
         println("$indent- ${topic.title} (ID: ${topic.id}, Kind: ${topic.kind}, Leaf: ${topic.is_leaf})")
 

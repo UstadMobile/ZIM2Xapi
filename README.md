@@ -2,9 +2,13 @@
 
 This command-line tool helps you convert ZIM files into xAPI packages
 
-## Installation
+### Features
 
-### 1. Install Required Dependencies
+- List available channels from Kolibri servers.
+- List topics for a specific Kolibri channel.
+- Download a Kolibri topic as a ZIM file and convert it to xAPI.
+
+### Install Required Dependencies
 
 Before proceeding, ensure that you have the following tools installed on your platform:
 
@@ -18,6 +22,28 @@ Before proceeding, ensure that you have the following tools installed on your pl
 ## Usage
 
 Once you have the JAR file and the required dependencies installed, you can use the following commands:
+
+Khan2Xapi provides three main subcommands:
+
+- list-channels: Lists all available channels from Kolibri servers.
+- list-topics: Lists topics within a specific channel and lists sub-topics within a topic
+- download-topic: Downloads a topic as a ZIM file and converts it into an xAPI file.
+
+### List Channels
+
+Lists all available channels with their channelId from Kolibri servers.
+
+```bash
+java -jar zim2xapi.jar list-channels
+```
+
+### List Topics
+
+The list-topics command lists topics within a specific channel. Up to one level of subtopics will be displayed. To list the deeper subtopics run the command again for the given subtopic id.
+
+```bash
+java -jar zim2xapi.jar list-topics -id <channel/topic id>
+```
 
 ### Download a topic 
 
