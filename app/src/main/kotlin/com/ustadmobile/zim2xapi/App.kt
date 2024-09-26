@@ -122,16 +122,23 @@ class DownloadTopic : CliktCommand(name = "convert") {
                 echo(licenseText)
             }
 
-            val kolibri2zimPath = FindKolibri2ZimUseCase().invoke(kolibiri2zimPath, dockerPath, outputDir)
+            try {
+                val kolibri2zimPath = FindKolibri2ZimUseCase().invoke(kolibiri2zimPath, dockerPath, outputDir)
 
-            val kolbir2zimProcess = ProcessBuilderUseCase(kolibri2zimPath)
+                val kolbir2zimProcess = ProcessBuilderUseCase(kolibri2zimPath)
 
-            DownloadKolibriZimUseCase(kolbir2zimProcess).invoke(
-                channelId,
-                topicId,
-                outputDir,
-                fileName ?: topicId
-            )
+                DownloadKolibriZimUseCase(kolbir2zimProcess).invoke(
+                    channelId,
+                    topicId,
+                    outputDir,
+                    fileName ?: topicId
+                )
+
+            }catch (e: Exception){
+                echo(e.stackTrace, err = true)
+                echo(e.message, err = true)
+                return
+            }
         } else {
             echo("You must provide either a ZIM file or a Kolibri channel ID and topic.", err = true)
             return
@@ -143,19 +150,25 @@ class DownloadTopic : CliktCommand(name = "convert") {
         val extractedZimFolder = File(outputDir, fileName)
         extractedZimFolder.mkdirs()
 
-        // extract the zim
-        ExtractZimUseCase(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
+        try {
+            // extract the zim
+            ExtractZimUseCase(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
 
-        // fix any exceptions found in the folder
-        FixExtractZimExceptions(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
+            // fix any exceptions found in the folder
+            FixExtractZimExceptions(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
 
-        // create the xApi zip file
-        CreateXapiFileUseCase(zimDumpProcess).invoke(
-            extractedZimFolder,
-            outputDir,
-            fileName,
-            createdZimFile
-        )
+            // create the xApi zip file
+            CreateXapiFileUseCase(zimDumpProcess).invoke(
+                extractedZimFolder,
+                outputDir,
+                fileName,
+                createdZimFile
+            )
+
+        }catch (e: Exception){
+            echo(e.stackTrace, err = true)
+            echo(e.message, err = true)
+        }
 
     }
 }
