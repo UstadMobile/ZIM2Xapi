@@ -100,16 +100,6 @@ class DownloadTopic : CliktCommand(name = "convert") {
 
     override fun run() {
 
-        val zimDump = SysPathUtil.findCommandInPath("zimdump", zimDumpPath)
-        if (zimDump == null) {
-            echo(
-                "zimdump not found. Please install it from https://download.openzim.org/release/zim-tools/",
-                err = true
-            )
-            return
-        }
-        val zimDumpProcess = ProcessBuilderUseCase(listOf(zimDump.absolutePath))
-
         val channelId = channelId
         val topicId = topicId
         val zimFile = zimFile
@@ -151,6 +141,17 @@ class DownloadTopic : CliktCommand(name = "convert") {
         extractedZimFolder.mkdirs()
 
         try {
+
+            val zimDump = SysPathUtil.findCommandInPath("zimdump", zimDumpPath)
+            if (zimDump == null) {
+                echo(
+                    "zimdump not found. Please install it from https://download.openzim.org/release/zim-tools/",
+                    err = true
+                )
+                return
+            }
+            val zimDumpProcess = ProcessBuilderUseCase(listOf(zimDump.absolutePath))
+
             // extract the zim
             ExtractZimUseCase(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
 
