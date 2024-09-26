@@ -4,7 +4,7 @@ import java.io.File
 import java.io.InputStreamReader
 import java.net.URLDecoder
 
-class FixExtractZimExceptions(private val process: ProcessBuilderUseCase) {
+class FixExtractZimExceptions(private val zimDumpProcess: ProcessBuilderUseCase) {
 
     operator fun invoke(
         zimFile: File,
@@ -19,7 +19,7 @@ class FixExtractZimExceptions(private val process: ProcessBuilderUseCase) {
         }
 
         // get the mainpage of the zim and rename it to index.html
-        val infoOutput = process.invoke("zimdump", "info ${zimFile.absolutePath}")
+        val infoOutput = zimDumpProcess.invoke("info ${zimFile.absolutePath}")
         val mainPageLine = infoOutput.lines().find { it.trim().startsWith("main page:") }
         val mainPage = mainPageLine?.split(":")?.get(1)?.trim()
             ?: throw Exception("Zim mainPage not provided by zimdump")

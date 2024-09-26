@@ -8,7 +8,9 @@ import java.io.PrintWriter
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-class CreateXapiFileUseCase(private val process: ProcessBuilderUseCase) {
+class CreateXapiFileUseCase(
+    private val zimDumpProcess: ProcessBuilderUseCase
+) {
 
     operator fun invoke(
         zimFolder: File,
@@ -23,7 +25,7 @@ class CreateXapiFileUseCase(private val process: ProcessBuilderUseCase) {
         val description = doc.select("meta[name=description]").attr("content")
         val lang = doc.select("html").attr("lang")
 
-        val output = process.invoke("zimdump","info ${zimFile.absolutePath}")
+        val output = zimDumpProcess.invoke("info ${zimFile.absolutePath}")
         val uuidLine = output.lines().find { it.trim().startsWith("uuid:") }
         val uuid = uuidLine?.split(":")?.get(1)?.trim()
             ?: throw Exception("uuid not provided by zimdump")
@@ -63,7 +65,6 @@ class CreateXapiFileUseCase(private val process: ProcessBuilderUseCase) {
 
         const val TINCAN_XML = "tincan.xml"
         const val INDEX_HTML = "index.html"
-        const val KHAN_LICENSE = "khan-license-notice.txt"
 
     }
 

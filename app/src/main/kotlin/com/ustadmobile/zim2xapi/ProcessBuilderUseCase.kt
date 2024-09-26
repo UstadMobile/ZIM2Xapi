@@ -1,14 +1,13 @@
 package com.ustadmobile.zim2xapi
 
-class ProcessBuilderUseCase {
+class ProcessBuilderUseCase(private val cmdPath: List<String>) {
 
     operator fun invoke(
-        command: String,
         params: String,
         printOutput: Boolean = true
     ): String {
         val commandList = buildList {
-            addAll(command.split(whiteSpaceRegex.toRegex()))
+            addAll(cmdPath)
             addAll(params.split(whiteSpaceRegex.toRegex()))
         }
         val outputBuilder = StringBuilder()

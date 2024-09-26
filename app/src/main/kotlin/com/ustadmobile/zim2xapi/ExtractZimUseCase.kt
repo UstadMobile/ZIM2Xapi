@@ -2,14 +2,13 @@ package com.ustadmobile.zim2xapi
 
 import java.io.File
 
-class ExtractZimUseCase(private val process: ProcessBuilderUseCase) {
+class ExtractZimUseCase(private val zimDumpProcess: ProcessBuilderUseCase) {
 
     operator fun invoke(
         zimFile: File,
         output: File
     ) {
-        process.invoke(
-            "zimdump",
+        zimDumpProcess.invoke(
             "dump --dir=${output.absolutePath} ${zimFile.absolutePath}"
         )
     }

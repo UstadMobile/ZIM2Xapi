@@ -13,7 +13,6 @@ import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.file
 import com.ustadmobile.zim2xapi.Client.client
 import com.ustadmobile.zim2xapi.Client.json
-import com.ustadmobile.zim2xapi.SysPathUtil.commandExists
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import java.io.File
@@ -68,7 +67,7 @@ class KolibriTopics : EndpointCommand(name = "list-topics") {
 
 }
 
-class DownloadTopic : CliktCommand(name = "download-topic") {
+class DownloadTopic : CliktCommand(name = "convert") {
     override val printHelpOnEmptyArgs = true
 
     val channelId by option("-channel-id", help = "The channel ID")
@@ -88,6 +87,10 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
         help = "The path to the kolibri2zim binary - can be downloaded from https://github.com/openzim/kolibri"
     ).file(mustExist = true, canBeDir = false)
 
+    val dockerPath by option(
+        "-docker",
+        help = "The path to docker - can be downloaded from https://docs.docker.com/get-docker/"
+    ).file(mustExist = true, canBeDir = false)
 
     val outputDir by option("-dir", "-output", help = "The output directory for the xApi file")
         .file(canBeFile = false, mustBeWritable = true)
@@ -97,16 +100,15 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
 
     override fun run() {
 
-        val processBuilderUseCase = ProcessBuilderUseCase()
-
-        // zimDump required to extract the ZIM file
-        if (!commandExists("zimdump", zimDumpPath)) {
+        val zimDump = SysPathUtil.findCommandInPath("zimdump", zimDumpPath)
+        if (zimDump == null) {
             echo(
                 "zimdump not found. Please install it from https://download.openzim.org/release/zim-tools/",
                 err = true
             )
             return
         }
+        val zimDumpProcess = ProcessBuilderUseCase(listOf(zimDump.absolutePath))
 
         val channelId = channelId
         val topicId = topicId
@@ -120,16 +122,15 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
                 echo(licenseText)
             }
 
-            val (cmdPath, isKolibriAvailable) = GetKolibri2ZimUseCase(processBuilderUseCase)
-                .isKolibriAvailable(kolibiri2zimPath)
+            val kolibri2zimPath = FindKolibri2ZimUseCase().invoke(kolibiri2zimPath, dockerPath, outputDir)
 
-            DownloadKolibriZimUseCase(processBuilderUseCase).invoke(
+            val kolbir2zimProcess = ProcessBuilderUseCase(kolibri2zimPath)
+
+            DownloadKolibriZimUseCase(kolbir2zimProcess).invoke(
                 channelId,
                 topicId,
                 outputDir,
-                fileName ?: topicId,
-                isKolibriAvailable,
-                cmdPath
+                fileName ?: topicId
             )
         } else {
             echo("You must provide either a ZIM file or a Kolibri channel ID and topic.", err = true)
@@ -143,19 +144,25 @@ class DownloadTopic : CliktCommand(name = "download-topic") {
         extractedZimFolder.mkdirs()
 
         // extract the zim
-        ExtractZimUseCase(processBuilderUseCase).invoke(createdZimFile, extractedZimFolder)
+        ExtractZimUseCase(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
 
         // fix any exceptions found in the folder
-        FixExtractZimExceptions(processBuilderUseCase).invoke(createdZimFile, extractedZimFolder)
+        FixExtractZimExceptions(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
 
         // create the xApi zip file
-        CreateXapiFileUseCase(processBuilderUseCase).invoke(extractedZimFolder, outputDir, fileName, createdZimFile)
+        CreateXapiFileUseCase(zimDumpProcess).invoke(
+            extractedZimFolder,
+            outputDir,
+            fileName,
+            createdZimFile
+        )
 
     }
 }
 
 object KhanChannels {
 
+    //  A list of khan academy channel ids from kolibri catalog
     val channels: List<String> = listOf(
         "c9d7f950ab6b5a1199e3d6c10d7f0103",
         "6616efc8aa604a308c8f5d18b00a1ce3",
@@ -168,13 +175,13 @@ object KhanChannels {
 
 }
 
-class Khan2Xapi : CliktCommand() {
+class Zim2Xapi : CliktCommand() {
     override val printHelpOnEmptyArgs = true
     override fun run() = Unit
 }
 
 fun main(args: Array<String>) {
-    Khan2Xapi()
+    Zim2Xapi()
         .subcommands(
             ListKolibriChannels(),
             KolibriTopics(),
