@@ -4,7 +4,7 @@ This command-line tool helps you convert ZIM files into xAPI packages
 
 ### Features
 
-- Convert a ZIM file to a xAPI file.
+- Convert a ZIM file to an xAPI package. Can optionally download ZIM files directly using kolibri2zim (e.g. to download specific Khan Academy lesson, etc)
 - List available channels from Kolibri servers.
 - List topics for a specific Kolibri channel.
 
@@ -70,5 +70,5 @@ java -jar zim2xapi.jar list-topics -id <channel/topic id>
 For more details on available options, use the --help flag with any command, such as:
 
 ```bash
-java -jar zim2xapi.jar download-topic --help
+java -jar zim2xapi.jar convert --help
 ```
