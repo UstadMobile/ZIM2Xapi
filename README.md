@@ -1,6 +1,18 @@
 # ZIM2Xapi
 
-This command-line tool helps you convert ZIM files into xAPI packages
+This command-line tool helps you convert ZIM files into xAPI packages. ZIM files can contain Wikipedia content, Khan Academy videos and/or exercises, and various others content types.
+
+xAPI packages are supported by many learning management systems. This tool is intended to facilitate using open educational resources in different learning management systems and/or other apps.
+xAPI packages generally work well in offline/limited connectivity use cases.
+
+This is a conversion tool developed by UstadMobile FZ-LLC. It is unofficial and is not endorsed by any content provider (e.g. Khan Academy, Wikipedia, or any other). The user is responsible
+to abide by the terms of all relevant licenses.
+
+For Wikipedia content: see [Wikipedia reusers rights and obligations](https://en.wikipedia.org/wiki/Wikipedia:Copyrights#Reusers'_rights_and_obligations).
+
+For Khan Academy content: see [Khan Academy's reuse terms](https://support.khanacademy.org/hc/en-us/articles/202262954-Can-I-use-Khan-Academy-s-videos-name-materials-links-in-my-project).
+
+For any other content: check the license provided by the author.
 
 ### Features
 
