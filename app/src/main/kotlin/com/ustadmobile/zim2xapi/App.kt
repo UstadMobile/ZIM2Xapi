@@ -13,6 +13,7 @@ import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.file
 import com.ustadmobile.zim2xapi.Client.client
 import com.ustadmobile.zim2xapi.Client.json
+import com.ustadmobile.zim2xapi.utils.SysPathUtil
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import java.io.File
@@ -156,10 +157,10 @@ class DownloadTopic : CliktCommand(name = "convert") {
             ExtractZimUseCase(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
 
             // fix any exceptions found in the folder
-            FixExtractZimExceptions(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
+            FixExtractZimExceptionsUseCase(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
 
             // create the xApi zip file
-            CreateXapiFileUseCase(zimDumpProcess).invoke(
+            CreateXapiFileUseCase(zimDumpProcess, AddxAPIStatementUseCase()).invoke(
                 extractedZimFolder,
                 outputDir,
                 fileName,

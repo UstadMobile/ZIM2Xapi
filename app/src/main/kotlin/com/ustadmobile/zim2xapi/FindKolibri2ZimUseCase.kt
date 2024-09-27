@@ -1,5 +1,6 @@
 package com.ustadmobile.zim2xapi
 
+import com.ustadmobile.zim2xapi.utils.SysPathUtil
 import java.io.File
 
 class FindKolibri2ZimUseCase {

@@ -1,10 +1,9 @@
 package com.ustadmobile.zim2xapi
 
 import java.io.File
-import java.io.InputStreamReader
 import java.net.URLDecoder
 
-class FixExtractZimExceptions(private val zimDumpProcess: ProcessBuilderUseCase) {
+class FixExtractZimExceptionsUseCase(private val zimDumpProcess: ProcessBuilderUseCase) {
 
     operator fun invoke(
         zimFile: File,

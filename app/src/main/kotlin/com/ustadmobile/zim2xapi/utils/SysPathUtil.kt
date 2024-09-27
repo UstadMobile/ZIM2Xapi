@@ -1,4 +1,4 @@
-package com.ustadmobile.zim2xapi
+package com.ustadmobile.zim2xapi.utils
 
 import java.io.File
 
