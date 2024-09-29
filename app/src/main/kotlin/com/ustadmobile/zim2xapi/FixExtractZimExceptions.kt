@@ -29,8 +29,8 @@ class FixExtractZimExceptions(private val zimDumpProcess: ProcessBuilderUseCase)
         val mainFile = File(exceptionsFolder, mainPage)
 
         val fileToRename = when {
-            mainPageFile.exists() -> mainPageFile
-            mainFile.exists() -> mainFile
+            mainPageFile.exists() && mainPageFile.isFile -> mainPageFile
+            mainFile.exists() && mainFile.isFile -> mainFile
             else -> throw Exception("Zim main page not found in extracted folder")
         }
 
