@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class XapiObject(
     val id: String,
+    val objectType: String = ACTIVITY,
     val definition: ActivityDefinition
 )
 
@@ -14,3 +15,5 @@ data class ActivityDefinition(
     val description: Map<String, String>,
     val type: String
 )
+
+const val ACTIVITY = "Activity"

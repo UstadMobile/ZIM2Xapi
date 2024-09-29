@@ -3,7 +3,6 @@ package com.ustadmobile.zim2xapi
 import com.ustadmobile.zim2xapi.models.ActivityDefinition
 import com.ustadmobile.zim2xapi.models.XapiObject
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.Json.Default.encodeToString
 import org.jsoup.Jsoup
 import java.io.File
 import java.io.FileInputStream
@@ -14,7 +13,8 @@ import java.util.zip.ZipOutputStream
 
 class CreateXapiFileUseCase(
     private val zimDumpProcess: ProcessBuilderUseCase,
-    private val addXApi: AddxAPIStatementUseCase
+    private val addXApi: AddxAPIStatementUseCase,
+    private val json: Json
 ) {
 
     operator fun invoke(
@@ -54,9 +54,8 @@ class CreateXapiFileUseCase(
         }
 
         val xapiObjectJsonFile = File(zimFolder, "xapiobject.json")
-        xapiObjectJsonFile.mkdirs()
         xapiObjectJsonFile.writeText(
-            encodeToString(
+            json.encodeToString(
                 XapiObject.serializer(), XapiObject(
                     id = activityId,
                     definition = ActivityDefinition(

@@ -26,6 +26,7 @@ object Client {
 
     val json: Json by lazy {
         Json {
+            encodeDefaults = true
             ignoreUnknownKeys = true
         }
     }
@@ -160,7 +161,7 @@ class DownloadTopic : CliktCommand(name = "convert") {
             FixExtractZimExceptionsUseCase(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
 
             // create the xApi zip file
-            CreateXapiFileUseCase(zimDumpProcess, AddxAPIStatementUseCase()).invoke(
+            CreateXapiFileUseCase(zimDumpProcess, AddxAPIStatementUseCase(), json).invoke(
                 extractedZimFolder,
                 outputDir,
                 fileName,
