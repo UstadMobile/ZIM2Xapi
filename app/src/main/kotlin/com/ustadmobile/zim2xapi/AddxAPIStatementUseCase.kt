@@ -6,7 +6,8 @@ import java.io.File
 class AddxAPIStatementUseCase {
 
     operator fun invoke(
-        zimFolder: File
+        zimFolder: File,
+        passingGrade: Int
     ) {
 
         val perseusFile = File(zimFolder, "/assets/perseus/perseus_script.js")
@@ -23,20 +24,14 @@ class AddxAPIStatementUseCase {
 
         indexFile.writeText(indexDoc.html())
 
+        val passingGradeDeclaration = "const passingGrade = $passingGrade;\n"
         val scoreFile = File(zimFolder, "/assets/perseus/score-tracker.js")
         val scoreText = this::class.java.classLoader.getResource("score-tracker.js")?.readText() ?: ""
-        scoreFile.writeText(scoreText)
+        scoreFile.writeText(passingGradeDeclaration + scoreText)
 
         val originalJS = perseusFile.readText()
-
         val xapiText = "window.vueApp = vueApp;"
-
-        val vueAppEndIndex = originalJS.lastIndexOf("})") + 2
-
-        val modifiedJS =
-            originalJS.substring(0, vueAppEndIndex) + "\n\n" + xapiText + "\n" + originalJS.substring(vueAppEndIndex)
-
-        perseusFile.writeText(modifiedJS)
+        perseusFile.writeText(originalJS + xapiText)
     }
 
 }

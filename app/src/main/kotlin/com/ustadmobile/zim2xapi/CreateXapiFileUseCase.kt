@@ -21,7 +21,8 @@ class CreateXapiFileUseCase(
         zimFolder: File,
         outputFolder: File,
         fileName: String,
-        zimFile: File
+        zimFile: File,
+        passingGrade: Int
     ) {
 
         val indexHtml = File(zimFolder, INDEX_HTML)
@@ -67,7 +68,7 @@ class CreateXapiFileUseCase(
             )
         )
 
-        addXApi.invoke(zimFolder)
+        addXApi.invoke(zimFolder, passingGrade)
 
         val xapiFile = File(outputFolder, "$fileName.zip")
         ZipOutputStream(FileOutputStream(xapiFile)).use { zipOut ->

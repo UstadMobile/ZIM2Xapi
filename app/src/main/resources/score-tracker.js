@@ -17,10 +17,10 @@ const interactionTypeMapping = {
     "number-line": "numeric",
     "matrix": "matrix",
     "matcher": "matching",
-    "interaction": "other",  // General fallback if interaction type is undefined
-    "group": "other", // Use 'other' as xAPI does not have a direct equivalent
-    "graded-group": "other", // Custom type mapped to 'other'
-    "graded-group-set": "other", // Custom type mapped to 'other'
+    "interaction": "other",
+    "group": "other",
+    "graded-group": "other",
+    "graded-group-set": "other",
     "grapher": "performance",
     "expression": "fill-in",
     "categorizer": "matching"
@@ -163,14 +163,17 @@ function isExerciseComplete(questionIndex, maxQuestionIndex, exerciseComplete) {
 
 async function sendCompletionXAPIStatement(object, correctAnswers, maxQuestionIndex) {
     const duration = recordProgress(startExerciseTime)
+    const scaled = correctAnswers / maxQuestionIndex
+    const passed = (scaled * 100) >= passingGrade;
     const completionXAPIData = createXAPIStatement("completed", object, {
         score: {
+            scaled: scaled,
             raw: correctAnswers,
             min: 0,
             max: maxQuestionIndex
         },
         completion: true,
-        success: correctAnswers === maxQuestionIndex,
+        success: passed,
         duration: duration
     });
     await sendXAPIStatement(completionXAPIData);
