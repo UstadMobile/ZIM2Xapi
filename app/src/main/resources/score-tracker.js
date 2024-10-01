@@ -58,6 +58,32 @@ function waitForVueApp() {
     });
 }
 
+parseXAPILaunchParameters()
+    .then(() => xapiEnabled && waitForVueApp())
+    .then((vueApp) => {
+
+        if (!xapiEnabled) return
+
+        console.log("Vue app is available. Running score tracker...");
+
+        sendStartXAPIStatement(vueApp);
+        initializeVueAppWatchers(vueApp);
+});
+
+/**
+ * Converts a duration given in seconds to an ISO 8601 duration string.
+ *
+ * @param {number} durationInSeconds - The duration in seconds to convert.
+ * @returns {string} The ISO 8601 duration string representing the given duration.
+ *
+ * The returned string follows the ISO 8601 standard, starting with "PT",
+ * and includes hours ("H"), minutes ("M"), and seconds ("S") as applicable.
+ *
+ * Examples:
+ * - convertToISO8601Duration(3661) returns "PT1H1M1S"
+ * - convertToISO8601Duration(45) returns "PT45S"
+ * - convertToISO8601Duration(0) returns "PT0S"
+ */
 function convertToISO8601Duration(durationInSeconds) {
     let hours = Math.floor(durationInSeconds / 3600);
     let minutes = Math.floor((durationInSeconds % 3600) / 60);
@@ -103,6 +129,18 @@ function recordProgress(startTime = lastProgressTime) {
     return iso8601Duration;
 }
 
+/**
+ * Creates a context object for xAPI statements based on URL parameters.
+ *
+ * @param {URLSearchParams} urlParams - A URLSearchParams object containing the URL query parameters.
+ * @returns {object|null} The context object for xAPI statements, or `null` if no relevant context data is available.
+ * Examples:
+ * - Given URL `?registration=12345&activity_platform=web`, the function will return:
+ *   {
+ *     registration: "12345",
+ *     platform: "web"
+ *   }
+ */
 function createContextFromUrlParams(urlParams) {
     // Initialize the context object
     let context = {
@@ -189,7 +227,17 @@ function addParentToContext(context) {
     return updatedContext
 }
 
-// Function to create a reusable xAPI statement object
+/**
+ * Creates an xAPI statement object with the given parameters.
+ *
+ * @param {string} verb - The action being performed, represented as a verb. This should be a valid xAPI verb.
+ * @param {object} object - The activity object that the verb is acting upon, following the xAPI activity structure.
+ * @param {object} [result=null] - Optional. The result of the activity, including properties such as score, success, and duration.
+ * @param {object} [context=xapiConfig.context] - Optional. The context in which the statement is generated, providing additional information about the activity. Defaults to `xapiConfig.context`.
+ * @param {object} [actor=xapiConfig.actor] - Optional. The actor (user) performing the action. Defaults to `xapiConfig.actor`.
+ *
+ * @returns {object} The constructed xAPI statement object, ready to be sent to an LRS (Learning Record Store).
+ */
 function createXAPIStatement(
     verb, object, result = null,
     context = xapiConfig.context,
@@ -214,12 +262,35 @@ function createXAPIStatement(
     return statement;
 }
 
-// Function to determine if the exercise is complete
+/**
+ * Determines if the exercise is complete.
+ *
+ * @param {number} questionIndex - The current index of the question being answered.
+ * @param {number} maxQuestionIndex - The maximum index of the questions in the exercise.
+ * @param {boolean} exerciseComplete - A flag indicating whether the exercise is already marked as complete.
+ *
+ * @returns {boolean} Returns `true` if the exercise should be marked as complete, otherwise `false`.
+ *
+ * The function checks whether the user has reached the end of the exercise, based on the current
+ * `questionIndex` and the `maxQuestionIndex`. In Khan Academy's context, the exercise is only
+ * marked as complete when the user navigates to the next question after answering the last one.
+ * Therefore, the function also checks if `exerciseComplete` is false to avoid redundant completions.
+ */
 function isExerciseComplete(questionIndex, maxQuestionIndex, exerciseComplete) {
-    // Khan Academy does not mark the exercise as complete until the user navigates to the next question
     return (questionIndex + 1) >= maxQuestionIndex && !exerciseComplete;
 }
 
+
+/**
+ * Sends an xAPI statement indicating the completion of an exercise.
+ *
+ * @param {object} object - The activity object that represents the exercise being completed.
+ * @param {number} correctAnswers - The number of correct answers provided by the user during the exercise.
+ * @param {number} maxQuestionIndex - The total number of questions in the exercise.
+ *
+ * @returns {Promise<void>} A promise that resolves when the xAPI statement has been successfully sent.
+ *
+ */
 async function sendCompletionXAPIStatement(object, correctAnswers, maxQuestionIndex) {
     const duration = recordProgress(startExerciseTime)
     const scaled = correctAnswers / maxQuestionIndex
@@ -242,6 +313,16 @@ async function sendCompletionXAPIStatement(object, correctAnswers, maxQuestionIn
     await sendXAPIStatement(completionXAPIStatement);
 }
 
+/**
+ * Sends an xAPI statement indicating that a question has been answered.
+ *
+ * @param {object} questionObject - The activity object representing the question that was answered.
+ * @param {boolean} success - Indicates whether the user's response was correct (`true`) or incorrect (`false`).
+ * @param {string|number} response - The user's response to the question, converted to a string.
+ *
+ * @returns {Promise<void>} A promise that resolves when the xAPI statement has been successfully sent.
+
+ */
 async function sendQuestionXAPIStatement(questionObject, success, response) {
     const duration = recordProgress(startExerciseTime)
     const result = {
@@ -257,8 +338,15 @@ async function sendQuestionXAPIStatement(questionObject, success, response) {
     await sendXAPIStatement(questionXAPIData);
 }
 
+/**
+ * Sends an xAPI statement to the configured Learning Record Store (LRS).
+ *
+ * @param {object} xAPIData - The xAPI statement object that will be sent to the LRS.
+ *
+ * @returns {Promise<void>} A promise that resolves when the xAPI statement has been successfully sent, or rejects if an error occurs.
+ *
+ */
 async function sendXAPIStatement(xAPIData) {
-
     try {
         console.log("sending xapi data")
         /*
@@ -283,97 +371,96 @@ async function sendXAPIStatement(xAPIData) {
     }
 };
 
-parseXAPILaunchParameters()
-    .then(() => xapiEnabled && waitForVueApp())
-    .then((vueApp) => {
 
-        if (!xapiEnabled) return
+function initializeVueAppWatchers(vueApp) {
+    // Watch the 'item' for changes
+    vueApp.$watch('item', handleItemChange, { deep: true, immediate: true });
 
-        console.log("Vue app is available. Running score tracker...");
+    // Watch 'messageType' for changes when an answer is checked
+    vueApp.$watch('messageType', (newVal) => handleAnswerCheck(newVal, vueApp));
+}
 
-        vueApp.sendStartXAPIStatement = () => {
-            const startXAPIData = createXAPIStatement("attempted", xapiConfig.object);
-            sendXAPIStatement(startXAPIData);
-        };
-        vueApp.sendStartXAPIStatement();
+// Handle changes to the item
+function handleItemChange(newVal, oldVal) {
+    if (!newVal.question) return;
 
-        // for displaying the current item
-        vueApp.$watch('item', function (newVal, oldVal) {
-            if (!newVal.question) {
-                return
-            }
+    console.log('Item Question: ', newVal.question.content);
 
-            console.log('Item Question: ', newVal.question.content)
-
-            let widgets = newVal.question.widgets;
-            Object.values(widgets).forEach(widget => {
-                console.log(`Item Type: ${widget.type}`);
-                console.log(`Item Value: ${widget.options.value}`);
-            });
-        }, { deep: true, immediate: true });
-
-        // Watch 'messageType' for changes when an answer is checked
-        vueApp.$watch('messageType', (newVal) => {
-
-            if (newVal === 'blank') {
-                // question reset. do not take any action
-                return;
-            }
-
-            const widgetsArray = Object.values(vueApp.item.question.widgets || {});
-            const type = convertToXAPI(widgetsArray, widgetsArray[0]?.type)
-            const questionObject = {
-                id: `${xapiConfig.object.id}/question-${vueApp.questionIndex + 1}`,
-                objectType: "Activity",
-                definition: {
-                    name: { "en-US": `Question ${vueApp.questionIndex + 1}` },
-                    description: { "en-US": vueApp.item.question.content },
-                    type: "http://adlnet.gov/expapi/activities/cmi.interaction",
-                    interactionType: type
-                }
-            };
-            let response = widgetsArray[0]?.options?.value || "";
-
-            // If the answer is correct
-            if (newVal === 'truth') {
-                if (!attemptedQuestions.has(vueApp.questionIndex)) {
-
-                    attemptedQuestions.add(vueApp.questionIndex);  // Mark question as attempted
-                    correctAnswers += 1;
-                    console.log("Correct answer! Incrementing correctAnswers");
-
-                    // Send xAPI statement for a correct answer
-                    sendQuestionXAPIStatement(
-                        questionObject,
-                        true,
-                        response
-                    );
-                } else {
-                    console.log("Answer correct, but question was previously attempted.");
-                }
-            } else if (newVal === 'error' && vueApp.message !== vueApp.message_strings.incompleteAns) {
-                incorrectAnswers += 1;
-                attemptedQuestions.add(vueApp.questionIndex);
-                console.log("Incorrect answer! Incrementing incorrectAnswers.");
-
-                // Send xAPI statement for an incorrect answer
-                sendQuestionXAPIStatement(
-                    questionObject,
-                    false,
-                    ""
-                );
-            } else {
-                // incomplete
-                console.log("Answer incomplete");
-            }
-
-            if (isExerciseComplete(vueApp.questionIndex, vueApp.maxQuestionIndex, vueApp.exerciseComplete)) {
-                sendCompletionXAPIStatement(
-                    xapiConfig.object,
-                    correctAnswers,
-                    vueApp.maxQuestionIndex
-                );
-            }
-
-        });
+    let widgets = newVal.question.widgets;
+    Object.values(widgets).forEach(widget => {
+        console.log(`Item Type: ${widget.type}`);
+        console.log(`Item Value: ${widget.options.value}`);
     });
+}
+
+// Handle answer checking logic
+function handleAnswerCheck(newVal, vueApp) {
+    if (newVal === 'blank') {
+        // question reset. do not take any action
+        return;
+    }
+
+    const widgetsArray = Object.values(vueApp.item.question.widgets || {});
+    const type = convertToXAPI(widgetsArray, widgetsArray[0]?.type);
+    const questionObject = {
+                    id: `${xapiConfig.object.id}/question-${vueApp.questionIndex + 1}`,
+                    objectType: "Activity",
+                    definition: {
+                        name: { "en-US": `Question ${vueApp.questionIndex + 1}` },
+                        description: { "en-US": vueApp.item.question.content },
+                        type: "http://adlnet.gov/expapi/activities/cmi.interaction",
+                        interactionType: type
+                    }
+    };
+    let response = widgetsArray[0]?.options?.value || "";
+
+    if (newVal === 'truth') {
+        handleCorrectAnswer(vueApp, questionObject, response);
+    } else if (newVal === 'error' && vueApp.message !== vueApp.message_strings.incompleteAns) {
+        handleIncorrectAnswer(vueApp, questionObject);
+    } else {
+        console.log("Answer incomplete");
+    }
+
+    if (isExerciseComplete(vueApp.questionIndex, vueApp.maxQuestionIndex, vueApp.exerciseComplete)) {
+        sendCompletionXAPIStatement(xapiConfig.object, correctAnswers, vueApp.maxQuestionIndex);
+    }
+}
+
+// Send the start xAPI statement
+async function sendStartXAPIStatement(vueApp) {
+    try {
+        const startXAPIData = createXAPIStatement("attempted", xapiConfig.object);
+        await sendXAPIStatement(startXAPIData);
+        console.log("Start xAPI statement sent successfully");
+    } catch (error) {
+        console.error("Failed to send start xAPI statement:", error);
+    }
+}
+
+// Handle logic for a correct answer
+function handleCorrectAnswer(vueApp, questionObject, response) {
+    if (!attemptedQuestions.has(vueApp.questionIndex)) {
+        attemptedQuestions.add(vueApp.questionIndex);  // Mark question as attempted
+        correctAnswers += 1;
+        console.log("Correct answer! Incrementing correctAnswers");
+
+        // Send xAPI statement for a correct answer
+        sendQuestionXAPIStatement(questionObject, true, response);
+    } else {
+        console.log("Answer correct, but question was previously attempted.");
+    }
+}
+
+// Handle logic for an incorrect answer
+function handleIncorrectAnswer(vueApp, questionObject) {
+    incorrectAnswers += 1;
+    attemptedQuestions.add(vueApp.questionIndex);
+    console.log("Incorrect answer! Incrementing incorrectAnswers.");
+
+    // Send xAPI statement for an incorrect answer
+    sendQuestionXAPIStatement(questionObject, false, "");
+}
+
+
+
