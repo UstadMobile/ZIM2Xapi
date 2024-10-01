@@ -1,3 +1,4 @@
+import * as Widgets from './khan-widgets.js';
 // Global Variables Initialization
 let xapiEnabled = false;
 let xapiConfig = {};
@@ -8,7 +9,7 @@ let startExerciseTime = new Date();
 let lastProgressTime = startExerciseTime;
 
 const interactionTypeMapping = {
-    "input-number": "numeric",
+    "input-number": Widgets.InputNumber,
     "orderer": "sequencing",
     "radio": "choice",
     "dropdown": "choice",
@@ -26,12 +27,15 @@ const interactionTypeMapping = {
     "categorizer": "matching"
 };
 
-function convertToXAPI(interactionType) {
+function convertToXAPI(widgetsArray, interactionType) {
     // Convert interaction type to lowercase and find the equivalent xAPI type
     const xapiType = interactionTypeMapping[interactionType];
 
-    if (xapiType) {
-        return xapiType;
+    // TODO temporary until i convert all to classes
+    if (typeof xapiType === 'string') {
+        return xapiType
+    } else if (typeof xapiType === 'function') {
+        return xapiType.toXAPI(widgetsArray);
     } else {
         console.error(`No mapping found for interaction type: ${interactionType}`);
         return "other"; // Return 'other' for unknown types
@@ -99,6 +103,50 @@ function recordProgress(startTime = lastProgressTime) {
     return iso8601Duration;
 }
 
+function createContextFromUrlParams(urlParams) {
+    // Initialize the context object
+    let context = {
+        contextActivities: {}
+    };
+
+    // Check and add 'registration' if available
+    const registration = urlParams.get('registration');
+    if (registration) {
+        context.registration = registration;
+    }
+
+    // Check and add 'activity_platform' if available
+    const activityPlatform = urlParams.get('activity_platform');
+    if (activityPlatform) {
+        context.platform = activityPlatform;
+    }
+
+    // Check and add 'Accept-Language' if available
+    const language = urlParams.get('Accept-Language');
+    if (language) {
+        context.language = language;
+    }
+
+    // Check and add 'grouping' if available, inside 'contextActivities'
+    const grouping = urlParams.get('grouping');
+    if (grouping) {
+        context.contextActivities.grouping = [{ id: grouping }];
+    }
+
+    // You can add more context properties based on the URL parameters here
+
+    // If no contextActivities were added, remove the property
+    if (Object.keys(context.contextActivities).length === 0) {
+        delete context.contextActivities;
+    }
+
+    if (Object.keys(context).length === 0) {
+        return null;
+    }
+
+    return context;
+}
+
 function parseXAPILaunchParameters() {
     const urlParams = new URLSearchParams(window.location.search);
     const endpoint = urlParams.get('endpoint');
@@ -119,12 +167,9 @@ function parseXAPILaunchParameters() {
                     endpoint: decodeURIComponent(endpoint),
                     auth: decodeURIComponent(auth),
                     actor: JSON.parse(decodeURIComponent(actor)),
-                    registration: urlParams.get('registration'),
-                    activity_id: urlParams.get('activity_id'),
-                    activity_platform: urlParams.get('activity_platform'),
-                    language: urlParams.get('Accept-Language'),
-                    grouping: urlParams.get('grouping'),
-                    object: objectData
+                    context: createContextFromUrlParams(urlParams),
+                    object: objectData,
+                    parent: [objectData]
                 };
                 console.log('xAPI enabled with config:', xapiConfig);
                 return;
@@ -137,9 +182,20 @@ function parseXAPILaunchParameters() {
     }
 }
 
+function addParentToContext(context) {
+    let updatedContext = context ? JSON.parse(JSON.stringify(context)) : {};
+    updatedContext.contextActivities = context.contextActivities || {};
+    updatedContext.contextActivities.parent = xapiConfig.parent
+    return updatedContext
+}
+
 // Function to create a reusable xAPI statement object
-function createXAPIStatement(verb, object, result = null, actor = xapiConfig.actor) {
-    const xapi = {
+function createXAPIStatement(
+    verb, object, result = null,
+    context = xapiConfig.context,
+    actor = xapiConfig.actor
+) {
+    const statement = {
         actor: actor,
         verb: {
             id: `http://adlnet.gov/expapi/verbs/${verb}`,
@@ -148,11 +204,14 @@ function createXAPIStatement(verb, object, result = null, actor = xapiConfig.act
         object
     };
     if (result !== null) {
-        xapi.result = result;
+        statement.result = result;
+    }
+    if (context != null) {
+        statement.context = context
     }
 
-    console.log(xapi)
-    return xapi;
+    console.log(statement)
+    return statement;
 }
 
 // Function to determine if the exercise is complete
@@ -165,7 +224,7 @@ async function sendCompletionXAPIStatement(object, correctAnswers, maxQuestionIn
     const duration = recordProgress(startExerciseTime)
     const scaled = correctAnswers / maxQuestionIndex
     const passed = (scaled * 100) >= passingGrade;
-    const completionXAPIData = createXAPIStatement("completed", object, {
+    const result = {
         score: {
             scaled: scaled,
             raw: correctAnswers,
@@ -175,17 +234,25 @@ async function sendCompletionXAPIStatement(object, correctAnswers, maxQuestionIn
         completion: true,
         success: passed,
         duration: duration
-    });
-    await sendXAPIStatement(completionXAPIData);
+    };
+    const completionXAPIStatement = createXAPIStatement(
+        "completed", object, result,
+        addParentToContext(xapiConfig.context) // context with parent exercise added
+    );
+    await sendXAPIStatement(completionXAPIStatement);
 }
 
 async function sendQuestionXAPIStatement(questionObject, success, response) {
     const duration = recordProgress(startExerciseTime)
-    const questionXAPIData = createXAPIStatement("answered", questionObject, {
+    const result = {
         response: response.toString(),
         success: success,
         duration: duration
-    });
+    }
+    const questionXAPIData = createXAPIStatement(
+        "answered", questionObject, result,
+        addParentToContext(xapiConfig.context)
+    );
 
     await sendXAPIStatement(questionXAPIData);
 }
@@ -194,6 +261,7 @@ async function sendXAPIStatement(xAPIData) {
 
     try {
         console.log("sending xapi data")
+        /*
         const response = await fetch(xapiConfig.endpoint, {
             method: "POST",
             headers: {
@@ -209,6 +277,7 @@ async function sendXAPIStatement(xAPIData) {
         } else {
             console.error("Failed to send xAPI statement:", response.statusText);
         }
+        */
     } catch (error) {
         console.error("Error sending xAPI statement:", error);
     }
@@ -252,9 +321,9 @@ parseXAPILaunchParameters()
             }
 
             const widgetsArray = Object.values(vueApp.item.question.widgets || {});
-            const type = convertToXAPI(widgetsArray[0]?.type)
+            const type = convertToXAPI(widgetsArray, widgetsArray[0]?.type)
             const questionObject = {
-                id: `http://example.com/activities/question-${vueApp.questionIndex + 1}`,
+                id: `${xapiConfig.object.id}/question-${vueApp.questionIndex + 1}`,
                 objectType: "Activity",
                 definition: {
                     name: { "en-US": `Question ${vueApp.questionIndex + 1}` },
