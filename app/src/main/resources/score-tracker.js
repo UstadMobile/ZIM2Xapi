@@ -10,7 +10,7 @@ let lastProgressTime = startExerciseTime;
 
 const interactionTypeMapping = {
     "input-number": Widgets.InputNumber,
-    "orderer": "sequencing",
+    "orderer": Widgets.Orderer,
     "radio": "choice",
     "dropdown": "choice",
     "sorter": "matching",
@@ -339,7 +339,7 @@ async function sendQuestionXAPIStatement(questionObject, resultObject) {
 async function sendXAPIStatement(xAPIData) {
     try {
         console.log("sending xapi data")
-
+        /*
         const response = await fetch(xapiConfig.endpoint, {
             method: "POST",
             headers: {
@@ -355,7 +355,7 @@ async function sendXAPIStatement(xAPIData) {
         } else {
             console.error("Failed to send xAPI statement:", response.statusText);
         }
-
+        */
     } catch (error) {
         console.error("Error sending xAPI statement:", error);
     }
