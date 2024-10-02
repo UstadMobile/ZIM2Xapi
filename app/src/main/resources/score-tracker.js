@@ -11,7 +11,7 @@ let lastProgressTime = startExerciseTime;
 const interactionTypeMapping = {
     "input-number": Widgets.InputNumber,
     "orderer": Widgets.Orderer,
-    "radio": "choice",
+    "radio": Widgets.Radio,
     "dropdown": "choice",
     "sorter": "matching",
     "plotter": "performance",

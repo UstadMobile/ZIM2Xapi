@@ -130,26 +130,62 @@ export class Orderer extends Question {
 export class Radio extends Question {
      constructor(questionIndex, endpoint, item) {
           super(questionIndex, endpoint, item); // Initialize common properties
+
+          const widgetsArray = Object.values(item.question.widgets || {});
+          const widget = widgetsArray[0];
+
+          // Ensure widget options exist
+          if (!widget || !widget.options || !widget.options.choices) {
+               throw new Error("Invalid widget data for Radio");
+          }
+
+          const choices = widget.options.choices.map((option, index) => {
+               const id = `choice${index + 1}`;
+               return {
+                    id: id,
+                    description: {
+                         "en-US": option.isNoneOfTheAbove ? "None of the Above" : option.content
+                    },
+                    correct: option.correct
+               };
+          });
+
+          const correctResponseIds = choices
+               .filter(choice => choice.correct) // Filter for correct options
+               .map(choice => choice.id) // Map to get the IDs of the correct choices
+               .join("[,]")
+
+          this.object.choices = choices.map(({ id, description }) => ({ id, description })); // Remove `correct` key for xAPI
+          this.object.definition.interactionType = "choice"
+          this.object.definition.correctResponsesPattern = [correctResponseIds];
+
      }
 
      generateResult(userResponse, success, duration) {
           let result = super.generateResult(userResponse, success, duration)
-
+          console.log(userResponse)
           let userResponseString;
 
           if (success) {
                userResponseString = this.object.definition.correctResponsesPattern[0];
           } else {
-               const userValuesArray = Object.keys(userResponse)
-                    .flatMap(key => userResponse[key].current);
-
-               userResponseString = userValuesArray
-                    .map(response => {
-                         // Find the matching choice based on the response content
-                         const matchingChoice = this.object.choices.find(choice => choice.description["en-US"] === response);
-                         return matchingChoice ? matchingChoice.id : null;
-                    })
+               const questionKey = Object.keys(userResponse)[0]; // Assuming there's only one question response
+               const radioResponse = userResponse[questionKey]; // Access the specific question response
+               
+               if (radioResponse.noneOfTheAboveSelected) {
+                    const noneOfTheAboveChoice = this.object.choices.find(choice => choice.description["en-US"] === "None of the Above");
+                    userResponseString = noneOfTheAboveChoice ? noneOfTheAboveChoice.id : null;
+                } else {
+                    const userChoices = this.object.choices.map((choice, index) => {
+                         return radioResponse.choicesSelected[index] ? choice.id : null;
+                     }).filter(id => id !== null); // Filter out nulls
+             
+                    userResponseString = userChoices.join("[,]"); // Join selected choice IDs
+               }
           }
+
+          result.response = userResponseString
+          return result
      }
 }
 
