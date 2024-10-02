@@ -222,7 +222,7 @@ function parseXAPILaunchParameters() {
 
 function addParentToContext(context) {
     let updatedContext = context ? JSON.parse(JSON.stringify(context)) : {};
-    updatedContext.contextActivities = context.contextActivities || {};
+    updatedContext.contextActivities = context?.contextActivities || {};
     updatedContext.contextActivities.parent = xapiConfig.parent
     return updatedContext
 }
@@ -313,25 +313,18 @@ async function sendCompletionXAPIStatement(object, correctAnswers, maxQuestionIn
     await sendXAPIStatement(completionXAPIStatement);
 }
 
+
 /**
  * Sends an xAPI statement indicating that a question has been answered.
  *
- * @param {object} questionObject - The activity object representing the question that was answered.
- * @param {boolean} success - Indicates whether the user's response was correct (`true`) or incorrect (`false`).
- * @param {string|number} response - The user's response to the question, converted to a string.
+ * @param {questionObject} questionObject - The activity object representing the question that was answered.
+ * @param {resultObject} result - the xapi result object of the user's response to the question
  *
  * @returns {Promise<void>} A promise that resolves when the xAPI statement has been successfully sent.
-
  */
-async function sendQuestionXAPIStatement(questionObject, success, response) {
-    const duration = recordProgress(startExerciseTime)
-    const result = {
-        response: response.toString(),
-        success: success,
-        duration: duration
-    }
+async function sendQuestionXAPIStatement(questionObject, resultObject) {
     const questionXAPIData = createXAPIStatement(
-        "answered", questionObject, result,
+        "answered", questionObject, resultObject,
         addParentToContext(xapiConfig.context)
     );
 
@@ -340,16 +333,13 @@ async function sendQuestionXAPIStatement(questionObject, success, response) {
 
 /**
  * Sends an xAPI statement to the configured Learning Record Store (LRS).
- *
  * @param {object} xAPIData - The xAPI statement object that will be sent to the LRS.
- *
  * @returns {Promise<void>} A promise that resolves when the xAPI statement has been successfully sent, or rejects if an error occurs.
- *
  */
 async function sendXAPIStatement(xAPIData) {
     try {
         console.log("sending xapi data")
-        /*
+
         const response = await fetch(xapiConfig.endpoint, {
             method: "POST",
             headers: {
@@ -365,7 +355,7 @@ async function sendXAPIStatement(xAPIData) {
         } else {
             console.error("Failed to send xAPI statement:", response.statusText);
         }
-        */
+
     } catch (error) {
         console.error("Error sending xAPI statement:", error);
     }
@@ -400,27 +390,25 @@ function handleAnswerCheck(newVal, vueApp) {
         return;
     }
 
-    const widgetsArray = Object.values(vueApp.item.question.widgets || {});
-    const type = convertToXAPI(widgetsArray, widgetsArray[0]?.type);
-    const questionObject = {
-                    id: `${xapiConfig.object.id}/question-${vueApp.questionIndex + 1}`,
-                    objectType: "Activity",
-                    definition: {
-                        name: { "en-US": `Question ${vueApp.questionIndex + 1}` },
-                        description: { "en-US": vueApp.item.question.content },
-                        type: "http://adlnet.gov/expapi/activities/cmi.interaction",
-                        interactionType: type
-                    }
-    };
-    let response = widgetsArray[0]?.options?.value || "";
-
-    if (newVal === 'truth') {
-        handleCorrectAnswer(vueApp, questionObject, response);
-    } else if (newVal === 'error' && vueApp.message !== vueApp.message_strings.incompleteAns) {
-        handleIncorrectAnswer(vueApp, questionObject);
-    } else {
-        console.log("Answer incomplete");
+    if (newVal === 'error' && vueApp.message === vueApp.message_strings.incompleteAns) {
+            console.log("Answer incomplete");
+            return; // Exit early if the answer is incomplete
     }
+
+    const widgetsArray = Object.values(vueApp.item.question.widgets || {});
+    const type = widgetsArray[0]?.type
+
+    const QuestionClass = interactionTypeMapping[type];
+    const question = new QuestionClass(vueApp.questionIndex, xapiConfig.object.id, vueApp.item);
+
+    const questionObject = question.getObject();
+    const duration = recordProgress(startExerciseTime);
+    const success = newVal === 'truth'
+    const userResponse = vueApp.itemRenderer.questionRenderer.getUserInputForWidgets();
+    const questionResult = question.generateResult(userResponse, success, duration)
+
+    handleAnswer(vueApp.questionIndex, questionObject,questionResult,success)
+
 
     if (isExerciseComplete(vueApp.questionIndex, vueApp.maxQuestionIndex, vueApp.exerciseComplete)) {
         sendCompletionXAPIStatement(xapiConfig.object, correctAnswers, vueApp.maxQuestionIndex);
@@ -438,29 +426,25 @@ async function sendStartXAPIStatement(vueApp) {
     }
 }
 
-// Handle logic for a correct answer
-function handleCorrectAnswer(vueApp, questionObject, response) {
-    if (!attemptedQuestions.has(vueApp.questionIndex)) {
-        attemptedQuestions.add(vueApp.questionIndex);  // Mark question as attempted
-        correctAnswers += 1;
-        console.log("Correct answer! Incrementing correctAnswers");
+function handleAnswer(questionIndex, questionObject, result, isCorrect) {
+    // Ensure the question is marked as attempted only once
+    if (!attemptedQuestions.has(questionIndex)) {
+        attemptedQuestions.add(questionIndex);
 
-        // Send xAPI statement for a correct answer
-        sendQuestionXAPIStatement(questionObject, true, response);
+        // Increment correct or incorrect counters based on isCorrect flag
+        if (isCorrect) {
+            correctAnswers += 1;
+            console.log("Correct answer! Incrementing correctAnswers");
+        } else {
+            incorrectAnswers += 1;
+            console.log("Incorrect answer! Incrementing incorrectAnswers");
+        }
+
+        // Send xAPI statement
+        sendQuestionXAPIStatement(questionObject, result);
     } else {
-        console.log("Answer correct, but question was previously attempted.");
+        if(isCorrect){
+            console.log("Answer correct, but question was previously attempted.")
+        }
     }
 }
-
-// Handle logic for an incorrect answer
-function handleIncorrectAnswer(vueApp, questionObject) {
-    incorrectAnswers += 1;
-    attemptedQuestions.add(vueApp.questionIndex);
-    console.log("Incorrect answer! Incrementing incorrectAnswers.");
-
-    // Send xAPI statement for an incorrect answer
-    sendQuestionXAPIStatement(questionObject, false, "");
-}
-
-
-
