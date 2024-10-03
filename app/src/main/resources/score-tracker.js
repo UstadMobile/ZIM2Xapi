@@ -1,7 +1,7 @@
 import * as Widgets from './khan-widgets.js';
 // Global Variables Initialization
 let xapiEnabled = false;
-let xapiConfig = {};
+export let xapiConfig = {};
 let correctAnswers = 0;
 let incorrectAnswers = 0;
 let attemptedQuestions = new Set();
@@ -12,7 +12,7 @@ const interactionTypeMapping = {
     "input-number": Widgets.InputNumber,
     "orderer": Widgets.Orderer,
     "radio": Widgets.Radio,
-    "dropdown": "choice",
+    "dropdown": Widgets.Dropdown,
     "sorter": "matching",
     "plotter": "performance",
     "number-line": "numeric",
@@ -26,21 +26,6 @@ const interactionTypeMapping = {
     "expression": "fill-in",
     "categorizer": "matching"
 };
-
-function convertToXAPI(widgetsArray, interactionType) {
-    // Convert interaction type to lowercase and find the equivalent xAPI type
-    const xapiType = interactionTypeMapping[interactionType];
-
-    // TODO temporary until i convert all to classes
-    if (typeof xapiType === 'string') {
-        return xapiType
-    } else if (typeof xapiType === 'function') {
-        return xapiType.toXAPI(widgetsArray);
-    } else {
-        console.error(`No mapping found for interaction type: ${interactionType}`);
-        return "other"; // Return 'other' for unknown types
-    }
-}
 
 // Function to wait for vueApp to be initialized
 function waitForVueApp() {
@@ -209,6 +194,7 @@ function parseXAPILaunchParameters() {
                     object: objectData,
                     parent: [objectData]
                 };
+                xapiConfig.language = (xapiConfig?.context?.language ?? Object.keys(objectData.definition.name)[0]) || "en";
                 console.log('xAPI enabled with config:', xapiConfig);
                 return;
             }).catch(error => {
@@ -247,7 +233,7 @@ function createXAPIStatement(
         actor: actor,
         verb: {
             id: `http://adlnet.gov/expapi/verbs/${verb}`,
-            display: { "en-US": verb }
+            display: { [xapiConfig.language] : verb }
         },
         object
     };
@@ -339,7 +325,7 @@ async function sendQuestionXAPIStatement(questionObject, resultObject) {
 async function sendXAPIStatement(xAPIData) {
     try {
         console.log("sending xapi data")
-        /*
+        
         const response = await fetch(xapiConfig.endpoint, {
             method: "POST",
             headers: {
@@ -355,7 +341,7 @@ async function sendXAPIStatement(xAPIData) {
         } else {
             console.error("Failed to send xAPI statement:", response.statusText);
         }
-        */
+        
     } catch (error) {
         console.error("Error sending xAPI statement:", error);
     }
