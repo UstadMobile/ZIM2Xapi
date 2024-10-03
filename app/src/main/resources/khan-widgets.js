@@ -67,6 +67,7 @@ export class InputNumber extends Question {
           const widgetsArray = Object.values(item.question.widgets || {});
 
           const correctResponseString = widgetsArray
+               .filter(widget => widget.type === 'input-number')
                .map(widget => widget.options?.value)  // Extract value from options if available
                .filter(value => value !== undefined)  // Filter out any undefined values
                .join("[,]");
@@ -159,7 +160,7 @@ export class Orderer extends Question {
 
           // TODO handle multiple widgets
           const widgetsArray = Object.values(item.question.widgets || {});
-          const widget = widgetsArray[0];
+          const widget = widgetsArray.find(w => w.type === 'orderer');
 
           // Ensure widget options exist
           if (!widget || !widget.options) {
@@ -290,7 +291,7 @@ export class Radio extends Question {
 
           // TODO handle multiple widgets
           const widgetsArray = Object.values(item.question.widgets || {});
-          const widget = widgetsArray[0];
+          const widget = widgetsArray.find(w => w.type === 'radio');
 
           // Ensure widget options exist
           if (!widget || !widget.options || !widget.options.choices) {
@@ -379,7 +380,7 @@ export class Dropdown extends Question {
 
            // TODO handle multiple widgets
           const widgetsArray = Object.values(item.question.widgets || {});
-          const widget = widgetsArray[0];
+          const widget = widgetsArray.find(w => w.type === 'dropdown');
 
           // Ensure widget options exist
           if (!widget || !widget.options || !widget.options.choices) {
@@ -463,7 +464,7 @@ export class Sorter extends Question {
           super(questionIndex, endpoint, item); // Initialize common properties
 
           const widgetsArray = Object.values(item.question.widgets || {});
-          const widget = widgetsArray[0];
+          const widget = widgetsArray.find(w => w.type === 'sorter');
 
           // Ensure widget options exist
           if (!widget || !widget.options || !widget.options.correct) {
@@ -589,7 +590,10 @@ export class Expression extends Question {
 
           const widgetsArray = Object.values(item.question.widgets || {});
 
-          const correctAnswersByWidget = widgetsArray.map(widget => {
+          // Get all the correct answers for each widget
+          const correctAnswersByWidget = widgetsArray
+                    .filter(widget => widget.type === 'expression')
+                    .map(widget => {
                const answerForms = widget.options.answerForms;
 
                return answerForms
@@ -598,6 +602,7 @@ export class Expression extends Question {
           })
 
 
+          // Generate all combinations of the given arrays
           const allCombinations = generateCombinations(correctAnswersByWidget);
           const correctResponsesPattern = allCombinations.map(combination => combination.join('[,]'));
 
@@ -608,7 +613,137 @@ export class Expression extends Question {
      generateResult(userResponse, success, duration) {
           let result = super.generateResult(userResponse, success, duration)
 
-          const userResponseString = Object.values(userResponse).join('[,]')
+          const userResponseString = Object.values(userResponse)
+                                             .filter(value => value !== null)
+                                             .join('[,]')
+
+          result.response = userResponseString
+
+          return result
+     }
+}
+
+
+/*
+     Example Json
+     widgets: {
+      'matcher 1': {
+        graded: true,
+        options: {
+          labels: [
+            '**Claims**',
+            '**Evidence**'
+          ],
+          left: [
+            'Our Sun will run out of fuel and die in around 5 billion years ',
+            'Plate tectonics will rearrange the continents: the Pacific will narrow, bringing Australia closer to the Americas, and the Atlantic will expand to form the largest of the oceans ',
+            'Our Sun will run out of hydrogen, swell into a red giant, gobble up the inner rocky planets, and then collapse and die ',
+            'Average global temperatures will rise ',
+            'In 3 to 4 billion years, our galaxy will begin a slow collision with its closest large neighbor, Andromeda '
+          ],
+          orderMatters: false,
+          padding: true,
+          right: [
+            'Medium-sized stars typically exist for roughly 10 billion years',
+            'The current trajectory of the Earth’s tectonic plate movement',
+            'The life cycle of medium-sized stars includes a red giant stage and ends in a whimper as a white dwarf',
+            'Rapid escalation of greenhouse gas emissions',
+            'The current trajectory of the Milky Way galaxy and those in its immediate proximity'
+          ]
+        },
+        type: 'matcher',
+        version: {
+          major: 0,
+          minor: 0
+        }
+      }
+    }
+*/
+export class Matcher extends Question {
+     constructor(questionIndex, endpoint, item) {
+          super(questionIndex, endpoint, item); // Initialize common properties
+
+          const widgetsArray = Object.values(item.question.widgets || {});
+          const widget = widgetsArray.find(w => w.type === 'matcher');
+
+          // Ensure widget options exist
+          if (!widget || !widget.options || !widget.options.left || !widget.options.right) {
+               throw new Error("Invalid widget data for Matcher");
+          }
+
+          const leftChoices = widget.options.left;
+          const rightChoices = widget.options.right;
+
+          const source = leftChoices.map((choice, index) => ({
+               id: `source${index + 1}`,
+               description: {
+                    [xapiConfig.language]: choice
+               }
+          }));
+          
+          const target = rightChoices.map((choice, index) => ({
+               id: `${index + 1}`,
+               description: {
+                    [xapiConfig.language]: choice
+               }
+          }));
+
+          // end result based on size would be source1[.]1[,]source2[.]2[,]source3[.]3
+          const correctResponsesPattern = leftChoices.map((choice, index) => {
+               return `source${index + 1}[.]${index + 1}`;
+           }).join('[,]');
+
+          this.object.definition.interactionType = "matching"
+          this.object.definition.source = source;
+          this.object.definition.target = target;
+          this.object.definition.correctResponsesPattern = [correctResponsesPattern];
+          
+     }
+
+
+     /*
+     {
+    "matcher 1": {
+       0: {
+        "left": [
+            "Relative maximum or minimum",
+            "Positive or negative interval",
+            "Increasing or decreasing interval"
+        ],
+        "right": [
+            "The gym's net worth was at its lowest at $6$ months.",
+            "The gym was losing money for the first $6$ months.",
+            "The gym's losses exceeded its profits between $2$ and $10$ months after opening."
+        ]
+     }
+    }
+}
+     */
+     generateResult(userResponse, success, duration) {
+          let result = super.generateResult(userResponse, success, duration)
+
+          let userResponseString;
+
+          if (success) {
+               userResponseString = this.object.definition.correctResponsesPattern[0];
+          } else {
+               const matcher = Object.values(userResponse).filter(item => item && item.left && item.right)[0];
+
+               // left remains the same
+               const left = this.object.definition.source.map(source => source.id)      
+               // right is the user response                          
+               const right = matcher.right
+
+               const userChoices = right.map(option => {
+                    const matchingChoice = this.object.definition.target.find(choice => choice.description[[xapiConfig.language]] === option);
+                    return matchingChoice ? matchingChoice.id : null;
+               }).filter(id => id !== null); // Filter out nulls
+
+               userResponseString = left.map((choice, index) => {
+                    return `${choice}[.]${userChoices[index]}`;
+               }).join('[,]');
+
+          }
 
           result.response = userResponseString
 
@@ -632,7 +767,7 @@ function generateCombinations(arrays, prefix = []) {
      });
  
      return combinations;
-   }
+}
 
 
 function processChoicesWidgetData(widgetData) {

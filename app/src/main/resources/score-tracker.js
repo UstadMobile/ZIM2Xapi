@@ -8,14 +8,21 @@ let attemptedQuestions = new Set();
 let startExerciseTime = new Date();
 let lastProgressTime = startExerciseTime;
 
+// supported khan academy interaction types
 const interactionTypeMapping = {
     "input-number": Widgets.InputNumber,
     "orderer": Widgets.Orderer,
     "radio": Widgets.Radio,
     "dropdown": Widgets.Dropdown,
     "sorter": Widgets.Sorter,
-    "expression": Widgets.Expression
+    "expression": Widgets.Expression,
+    "matcher": Widgets.Matcher
 };
+
+const unsupportedInteractionTypes = [
+    "image"
+]
+
 
 // Function to wait for vueApp to be initialized
 function waitForVueApp() {
@@ -372,7 +379,8 @@ function handleAnswerCheck(newVal, vueApp) {
     }
 
     const widgetsArray = Object.values(vueApp.item.question.widgets || {});
-    const type = widgetsArray[0]?.type
+    const type = widgetsArray.filter(widget => !unsupportedInteractionTypes.includes(widget.type))
+                            .map(widget => widget.type)[0]
 
     const QuestionClass = interactionTypeMapping[type] || Widgets.Question
     const question = new QuestionClass(vueApp.questionIndex, xapiConfig.object.id, vueApp.item);
