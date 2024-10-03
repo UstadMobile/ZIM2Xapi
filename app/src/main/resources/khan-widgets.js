@@ -4,7 +4,7 @@
 */
 import { xapiConfig } from "./score-tracker.js"
 
-class Question {
+export class Question {
      constructor(questionIndex, endpoint, item) {
           this.item = item;
           this.object = {
@@ -402,8 +402,8 @@ export class Dropdown extends Question {
      /*
           User Response example
           {
-          "dropdown 1": {
-               "value": 1
+               "dropdown 1": {
+                    "value": 1
                }
           }
      */
@@ -430,60 +430,105 @@ export class Dropdown extends Question {
      }
 }
 
+/**
+ * Sorter widget
+ * 
+ * @param {number} questionIndex 
+ * @param {string} endpoint 
+ * @param {object} item 
+ * 
+ * Example Json
+ * widgets: {
+      'sorter 1': {
+        graded: true,
+        options: {
+          correct: [
+            '$0.005$ kilograms',
+            '$15$ grams',
+            '$55$ grams'
+          ],
+          layout: 'horizontal',
+          padding: true
+        },
+        type: 'sorter',
+        version: {
+          major: 0,
+          minor: 0
+        }
+      }
+    }
+ */
+export class Sorter extends Question {
+     constructor(questionIndex, endpoint, item) {
+          super(questionIndex, endpoint, item); // Initialize common properties
 
-export class Categorizer {
-     static toXAPI(widgetData) {
-          return "numeric"
+          const widgetsArray = Object.values(item.question.widgets || {});
+          const widget = widgetsArray[0];
+
+          // Ensure widget options exist
+          if (!widget || !widget.options || !widget.options.correct) {
+               throw new Error("Invalid widget data for Orderer");
+          }
+
+          const choices = widget.options.correct.map((option, index) => {
+               const id = `choice${index + 1}`;
+               return {
+                    id: id,
+                    description: {
+                         [xapiConfig.language]: option
+                    }
+               };
+          });
+
+          const correctResponseIds = choices
+               .map(choice => choice.id)
+               .join("[,]")
+
+          this.object.definition.choices = choices
+          this.object.definition.interactionType = "sequencing"
+          this.object.definition.correctResponsesPattern = [correctResponseIds];
+
+
+     }
+
+     /*
+          User Response example
+          {
+               "sorter 1": {
+                    "options": [
+                        0:"$15$ grams"
+                        1:"$0.005$ kilograms"
+                        2:"$55$ grams"  
+                    ]
+               }
+          }
+     */
+     generateResult(userResponse, success, duration) {
+          let result = super.generateResult(userResponse, success, duration)
+
+          let userResponseString;
+
+          if (success) {
+               userResponseString = this.object.definition.correctResponsesPattern[0];
+          } else {
+
+               const questionKey = Object.keys(userResponse)[0];
+               const sorterOptions = userResponse[questionKey].options;
+
+               // for each option, find the matching choice and return the id
+               const userChoices = sorterOptions.map(option => {
+                    const matchingChoice = this.object.definition.choices.find(choice => choice.description[[xapiConfig.language]] === option);
+                    return matchingChoice ? matchingChoice.id : null;
+               }).filter(id => id !== null); // Filter out nulls
+
+               userResponseString = userChoices.join("[,]"); // Join selected choice IDs
+          }
+
+          result.response = userResponseString
+          return result
      }
 }
 
-export class GradedGroupSet {
-     static toXAPI(widgetData) {
-          return "numeric"
-     }
-}
-
-export class GradedGroup {
-     static toXAPI(widgetData) {
-          return "numeric"
-     }
-}
-
-export class Group {
-     static toXAPI(widgetData) {
-          return "numeric"
-     }
-}
-
-export class Grapher {
-     static toXAPI(widgetData) {
-          return "numeric"
-     }
-}
-
-export class IFrame {
-     static toXAPI(widgetData) {
-          return "numeric"
-     }
-}
-
-export class Interaction {
-     static toXAPI(widgetData) {
-          return "numeric"
-     }
-}
-
-export class Matcher {
-     static toXAPI(widgetData) {
-          return "numeric"
-     }
-}
-
-export class Matrix {
-     static toXAPI(widgetData) {
-          return "numeric"
-     }
-}
 
 function processChoicesWidgetData(widgetData) {
 

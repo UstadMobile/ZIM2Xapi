@@ -13,18 +13,7 @@ const interactionTypeMapping = {
     "orderer": Widgets.Orderer,
     "radio": Widgets.Radio,
     "dropdown": Widgets.Dropdown,
-    "sorter": "matching",
-    "plotter": "performance",
-    "number-line": "numeric",
-    "matrix": "matrix",
-    "matcher": "matching",
-    "interaction": "other",
-    "group": "other",
-    "graded-group": "other",
-    "graded-group-set": "other",
-    "grapher": "performance",
-    "expression": "fill-in",
-    "categorizer": "matching"
+    "sorter": Widgets.Sorter
 };
 
 // Function to wait for vueApp to be initialized
@@ -384,7 +373,7 @@ function handleAnswerCheck(newVal, vueApp) {
     const widgetsArray = Object.values(vueApp.item.question.widgets || {});
     const type = widgetsArray[0]?.type
 
-    const QuestionClass = interactionTypeMapping[type];
+    const QuestionClass = interactionTypeMapping[type] || Widgets.Question
     const question = new QuestionClass(vueApp.questionIndex, xapiConfig.object.id, vueApp.item);
 
     const questionObject = question.getObject();
