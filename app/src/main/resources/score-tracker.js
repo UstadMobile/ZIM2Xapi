@@ -13,7 +13,8 @@ const interactionTypeMapping = {
     "orderer": Widgets.Orderer,
     "radio": Widgets.Radio,
     "dropdown": Widgets.Dropdown,
-    "sorter": Widgets.Sorter
+    "sorter": Widgets.Sorter,
+    "expression": Widgets.Expression
 };
 
 // Function to wait for vueApp to be initialized

@@ -529,6 +529,111 @@ export class Sorter extends Question {
      }
 }
 
+/*
+     Example Json
+     widgets: {
+        'expression 1': {
+          graded: true,
+          options: {
+            answerForms: [
+              {
+                considered: 'ungraded',
+                form: false,
+                simplify: false,
+                value: 'x+1'
+              },
+              {
+                considered: 'wrong',
+                form: false,
+                simplify: false,
+                value: 'y+1'
+              },
+              {
+                considered: 'correct',
+                form: false,
+                simplify: false,
+                value: 'z+1'
+              },
+              {
+                considered: 'correct',
+                form: false,
+                simplify: false,
+                value: 'a+1'
+              }
+            ],
+            ariaLabel: 'number of centimeters',
+            buttonSets: [
+              'basic'
+            ],
+            buttonsVisible: 'focused',
+            functions: [
+              'f',
+              'g',
+              'h'
+            ],
+            times: false,
+            visibleLabel: 'number of cm'
+          },
+          type: 'expression',
+          version: {
+            major: 1,
+            minor: 0
+          }
+        }
+      }
+
+*/
+export class Expression extends Question {
+     constructor(questionIndex, endpoint, item) {
+          super(questionIndex, endpoint, item); // Initialize common properties
+
+          const widgetsArray = Object.values(item.question.widgets || {});
+
+          const correctAnswersByWidget = widgetsArray.map(widget => {
+               const answerForms = widget.options.answerForms;
+
+               return answerForms
+               .filter(answer => answer.considered === 'correct')
+               .map(answer => answer.value);
+          })
+
+
+          const allCombinations = generateCombinations(correctAnswersByWidget);
+          const correctResponsesPattern = allCombinations.map(combination => combination.join('[,]'));
+
+          this.object.definition.interactionType = "fill-in"
+          this.object.definition.correctResponsesPattern = correctResponsesPattern;
+     }
+
+     generateResult(userResponse, success, duration) {
+          let result = super.generateResult(userResponse, success, duration)
+
+          const userResponseString = Object.values(userResponse).join('[,]')
+
+          result.response = userResponseString
+
+          return result
+     }
+}
+
+/*
+     Generate all combinations of the given arrays
+*/
+function generateCombinations(arrays, prefix = []) {
+     if (arrays.length === 0) {
+       return [prefix];
+     }
+ 
+     const [first, ...rest] = arrays;
+     const combinations = [];
+ 
+     first.forEach(item => {
+       combinations.push(...generateCombinations(rest, [...prefix, item]));
+     });
+ 
+     return combinations;
+   }
+
 
 function processChoicesWidgetData(widgetData) {
 
