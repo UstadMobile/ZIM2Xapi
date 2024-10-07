@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
 class FixExtractZimExceptionsTest {
 
     private val zimDumpProcess = mockk<ProcessBuilderUseCase>(relaxed = true)
-    private val fixExtractZimExceptions = FixExtractZimExceptions(zimDumpProcess)
+    private val fixExtractZimExceptions = FixExtractZimExceptionsUseCase(zimDumpProcess)
 
     @Test
     fun `invoke should rename main page to index html and move exceptions`() {
@@ -88,7 +88,7 @@ class FixExtractZimExceptionsTest {
         assertFalse(indexHtmlFile.exists(), "index.html should not exist since no renaming should have occurred")
 
         // Ensure that the `_exceptions` folder does not exist
-        val exceptionsFolder = File(zimFolder, FixExtractZimExceptions.EXCEPTIONS_FOLDER_NAME)
+        val exceptionsFolder = File(zimFolder, FixExtractZimExceptionsUseCase.EXCEPTIONS_FOLDER_NAME)
         assertFalse(exceptionsFolder.exists(), "_exceptions folder should not exist")
 
         // Ensure that the last modified time of the main page has not changed
@@ -131,7 +131,7 @@ class FixExtractZimExceptionsTest {
     }
 
     private fun createExceptionsFolder(zimFolder: File): File {
-        val exceptionsFolder = File(zimFolder, FixExtractZimExceptions.EXCEPTIONS_FOLDER_NAME)
+        val exceptionsFolder = File(zimFolder, FixExtractZimExceptionsUseCase.EXCEPTIONS_FOLDER_NAME)
         exceptionsFolder.mkdirs()
         return exceptionsFolder
     }
