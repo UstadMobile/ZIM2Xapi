@@ -34,10 +34,6 @@ export class Question {
 /**
  * InputNumber widget
  * 
- * @param {number} questionIndex 
- * @param {string} endpoint 
- * @param {object} item 
- * 
  * Example Json
  * widgets: {
       'input-number 1': {
@@ -67,8 +63,8 @@ export class InputNumber extends Question {
           const widgetsArray = Object.values(item.question.widgets || {});
 
           const correctResponseString = widgetsArray
-               .filter(widget => widget.type === 'input-number')
-               .map(widget => widget.options?.value)  // Extract value from options if available
+               .filter(widget => widget.type === 'input-number' || widget.type == 'numeric-input')
+               .map(widget => widget.options?.value || options.answers?.[0]?.value)  // Extract value from options if available
                .filter(value => value !== undefined)  // Filter out any undefined values
                .join("[,]");
 
@@ -93,6 +89,7 @@ export class InputNumber extends Question {
           return result
      }
 }
+
 
 
 /**
@@ -216,10 +213,6 @@ export class Orderer extends Question {
 /**
  * Radio widget
  * 
- * @param {number} questionIndex 
- * @param {string} endpoint 
- * @param {object} item 
- * 
  * Example Json
  * choices={[
     {
@@ -341,10 +334,6 @@ export class Radio extends Question {
 /**
  * Dropdown widget
  * 
- * @param {number} questionIndex 
- * @param {string} endpoint 
- * @param {object} item 
- * 
  * Example Json
  * widgets: {
       'dropdown 1': {
@@ -433,10 +422,6 @@ export class Dropdown extends Question {
 
 /**
  * Sorter widget
- * 
- * @param {number} questionIndex 
- * @param {string} endpoint 
- * @param {object} item 
  * 
  * Example Json
  * widgets: {
@@ -531,6 +516,8 @@ export class Sorter extends Question {
 }
 
 /*
+     Expression widget
+
      Example Json
      widgets: {
         'expression 1': {
@@ -625,6 +612,8 @@ export class Expression extends Question {
 
 
 /*
+     Matcher Widget 
+
      Example Json
      widgets: {
       'matcher 1': {
@@ -702,6 +691,8 @@ export class Matcher extends Question {
 
 
      /*
+     Matcher user response 
+     
      {
     "matcher 1": {
        0: {
@@ -750,6 +741,85 @@ export class Matcher extends Question {
           return result
      }
 }
+
+export class Categorizer extends Question {
+
+     constructor(questionIndex, endpoint, item) {
+          super(questionIndex, endpoint, item); // Initialize common properties
+         
+          const widgetsArray = Object.values(item.question.widgets || {});
+          const widget = widgetsArray[0];
+
+          // source
+          const items = widget.options.items
+          // target
+          const categories = widget.options.categories
+
+          const source = items.map((item, index) => ({
+               id: `source${index + 1}`,
+               description: {
+                    [xapiConfig.language]: item
+               }
+          }));
+          
+          const target = categories.map((category, index) => ({
+               id: `target${index + 1}`,
+               description: {
+                    [xapiConfig.language]: category
+               }
+          }));
+
+          const values = widget.options.values
+
+          const correctResponsesPattern = items.map((item, index) => {
+               return `source${index + 1}[.]target${values[index]}`;
+             }).join('[,]');
+     
+          this.object.definition.interactionType = "matching"
+          this.object.definition.source = source;
+          this.object.definition.target = target;
+          this.object.definition.correctResponsesPattern = [correctResponsesPattern];
+          
+     }
+
+     /*
+     {
+          categorizer 1 :{
+               0: {
+                    values:[
+                         0: 1
+                         1: 2
+                    ]
+               }
+          }
+     }
+
+     */
+     generateResult(userResponse, success, duration) {
+          let result = super.generateResult(userResponse, success, duration)
+          let userResponseString;
+
+          if (success) {
+               userResponseString = this.object.definition.correctResponsesPattern[0];
+          } else {
+               const categorizerKey = Object.keys(userResponse)[0];
+               const userValues = userResponse[categorizerKey][0].values; // User's selected categories
+
+               userResponseString = userValues.map((userValue, index) => {
+                         const target = this.object.definition.target[userValue]
+                         const source = this.object.definition.source[index]
+                         return `${source.id}[.]${target.id}`
+                  }).join("[,]")
+          }
+
+          result.response = userResponseString
+
+          return result
+     }
+
+}
+
+
 
 /*
      Generate all combinations of the given arrays
