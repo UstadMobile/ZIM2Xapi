@@ -403,14 +403,7 @@ export class Dropdown extends Question {
      constructor(questionIndex, endpoint, questionContent, widgets) {
           super(questionIndex, endpoint, questionContent, widgets); // Initialize common properties
 
-           // TODO handle multiple widgets
-          const widgetsArray = Object.values(item.question.widgets || {});
-          const widget = widgetsArray.find(w => w.type === 'dropdown');
-
-          // Ensure widget options exist
-          if (!widget || !widget.options || !widget.options.choices) {
-               throw new Error("Invalid widget data for Radio");
-          }
+          const widget = widgets[0];
            
           const choices = processChoicesWidgetData(widget.options.choices)
 
@@ -441,10 +434,9 @@ export class Dropdown extends Question {
           if (success) {
                userResponseString = this.object.definition.correctResponsesPattern[0];
           } else {
-               const questionKey = Object.keys(userResponse)[0];
-               const dropdownResponse = userResponse[questionKey];
+               const [dropDownResponse] = filterUserResponse(userResponse, this.widgets)
 
-               const selectedIndex = dropdownResponse.value - 1; // Adjust to 0-based index for the array
+               const selectedIndex = dropDownResponse.value - 1; // Adjust to 0-based index for the array
                const selectedChoice = this.object.definition.choices[selectedIndex].id;
 
                userResponseString = selectedChoice
@@ -484,13 +476,8 @@ export class Sorter extends Question {
      constructor(questionIndex, endpoint, questionContent, widgets) {
           super(questionIndex, endpoint, questionContent, widgets); // Initialize common properties
 
-          const widgetsArray = Object.values(item.question.widgets || {});
-          const widget = widgetsArray.find(w => w.type === 'sorter');
+          const widget = widgets[0];
 
-          // Ensure widget options exist
-          if (!widget || !widget.options || !widget.options.correct) {
-               throw new Error("Invalid widget data for Orderer");
-          }
 
           const choices = widget.options.correct.map((option, index) => {
                const id = `choice${index + 1}`;
@@ -534,8 +521,8 @@ export class Sorter extends Question {
                userResponseString = this.object.definition.correctResponsesPattern[0];
           } else {
 
-               const questionKey = Object.keys(userResponse)[0];
-               const sorterOptions = userResponse[questionKey].options;
+               const [sorterResponse] = filterUserResponse(userResponse, this.widgets)
+               const sorterOptions = sorterResponse.options
 
                // for each option, find the matching choice and return the id
                const userChoices = sorterOptions.map(option => {
@@ -611,11 +598,8 @@ export class Expression extends Question {
      constructor(questionIndex, endpoint, questionContent, widgets) {
           super(questionIndex, endpoint, questionContent, widgets); // Initialize common properties
 
-          const widgetsArray = Object.values(item.question.widgets || {});
-
           // Get all the correct answers for each widget
-          const correctAnswersByWidget = widgetsArray
-                    .filter(widget => widget.type === 'expression')
+          const correctAnswersByWidget = widgets
                     .map(widget => {
                const answerForms = widget.options.answerForms;
 
@@ -636,7 +620,7 @@ export class Expression extends Question {
      generateResult(userResponse, success, duration) {
           let result = super.generateResult(userResponse, success, duration)
 
-          const userResponseString = Object.values(userResponse)
+          const userResponseString =  filterUserResponse(userResponse, this.widgets)
                                              .filter(value => value !== null)
                                              .join('[,]')
 
@@ -688,13 +672,7 @@ export class Matcher extends Question {
      constructor(questionIndex, endpoint, questionContent, widgets) {
           super(questionIndex, endpoint, questionContent, widgets); // Initialize common properties
 
-          const widgetsArray = Object.values(item.question.widgets || {});
-          const widget = widgetsArray.find(w => w.type === 'matcher');
-
-          // Ensure widget options exist
-          if (!widget || !widget.options || !widget.options.left || !widget.options.right) {
-               throw new Error("Invalid widget data for Matcher");
-          }
+          const widget = widgets[0];
 
           const leftChoices = widget.options.left;
           const rightChoices = widget.options.right;
@@ -754,12 +732,11 @@ export class Matcher extends Question {
           if (success) {
                userResponseString = this.object.definition.correctResponsesPattern[0];
           } else {
-               const matcher = Object.values(userResponse).filter(item => item && item.left && item.right)[0];
-
+               const [matcherResponse] = filterUserResponse(userResponse, this.widgets)
                // left remains the same
                const left = this.object.definition.source.map(source => source.id)      
                // right is the user response                          
-               const right = matcher.right
+               const right = matcherResponse.right
 
                const userChoices = right.map(option => {
                     const matchingChoice = this.object.definition.target.find(choice => choice.description[[xapiConfig.language]] === option);
@@ -783,8 +760,7 @@ export class Categorizer extends Question {
      constructor(questionIndex, endpoint, questionContent, widgets) {
           super(questionIndex, endpoint, questionContent, widgets); // Initialize common properties
          
-          const widgetsArray = Object.values(item.question.widgets || {});
-          const widget = widgetsArray[0];
+          const widget = widgets[0];
 
           // source
           const items = widget.options.items
@@ -838,8 +814,8 @@ export class Categorizer extends Question {
           if (success) {
                userResponseString = this.object.definition.correctResponsesPattern[0];
           } else {
-               const categorizerKey = Object.keys(userResponse)[0];
-               const userValues = userResponse[categorizerKey][0].values; // User's selected categories
+               const [response] = filterUserResponse(userResponse, this.widgets)
+               const userValues = response.values; // User's selected categories
 
                userResponseString = userValues.map((userValue, index) => {
                          const target = this.object.definition.target[userValue]
