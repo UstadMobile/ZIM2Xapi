@@ -5,15 +5,15 @@
 import { xapiConfig } from "./score-tracker.js"
 
 export class Question {
-     constructor(questionIndex, endpoint, item) {
-          this.item = item;
+     constructor(id, endpoint, questionContent, widgets) {
+          this.widgets = widgets;
           this.object = {
-               id: `${endpoint}/question-${questionIndex + 1}`,
+               id: `${endpoint}/question-${id}`,
                objectType: "Activity",
                definition: {
-                    name: { [xapiConfig.language]: `Question ${questionIndex + 1}` },
+                    name: { [xapiConfig.language]: `Question ${id}` },
                     type: "http://adlnet.gov/expapi/activities/cmi.interaction",
-                    description: {[xapiConfig.language]: item.question.content }
+                    description: {[xapiConfig.language]: questionContent }
                }
           }
      }
@@ -57,13 +57,12 @@ export class Question {
  * 
  */
 export class InputNumber extends Question {
-     constructor(questionIndex, endpoint, item) {
-          super(questionIndex, endpoint, item); // Initialize common properties
+     constructor(questionIndex, endpoint, questionContent, widgets) {
+          super(questionIndex, endpoint, questionContent, widgets); // Initialize common properties
 
-          const widgetsArray = Object.values(item.question.widgets || {});
+          const widgetsArray = Object.values(widgets || {});
 
           const correctResponseString = widgetsArray
-               .filter(widget => widget.type === 'input-number' || widget.type == 'numeric-input')
                .map(widget => widget.options?.value || options.answers?.[0]?.value)  // Extract value from options if available
                .filter(value => value !== undefined)  // Filter out any undefined values
                .join("[,]");
@@ -72,6 +71,13 @@ export class InputNumber extends Question {
           this.object.definition.correctResponsesPattern = [correctResponseString];
      }
 
+     /*
+     {
+          "input-number 1": {
+               "currentValue": "104"
+           }   
+     }
+     */
      generateResult(userResponse, success, duration) {
           let result = super.generateResult(userResponse, success, duration)
 
@@ -81,7 +87,16 @@ export class InputNumber extends Question {
                // If success is true, use the correct response pattern directly
                userResponseString = this.object.definition.correctResponsesPattern[0];
           } else {
-               const userValuesArray = Object.keys(userResponse).map(key => userResponse[key].currentValue);
+
+               const filteredResponse = this.widgets.reduce((acc, widget) => {
+                    if (userResponse[widget.key]) {
+                         acc[widget.key] = userResponse[widget.key];
+                     }
+                    return acc;
+                }, {});
+
+               const userValuesArray = Object.values(filteredResponse).map(item => item.currentValue)
+
                userResponseString = userValuesArray.join("[,]");
           }
 
@@ -152,8 +167,8 @@ export class InputNumber extends Question {
  */
 export class Orderer extends Question {
 
-     constructor(questionIndex, endpoint, item) {
-          super(questionIndex, endpoint, item); // Initialize common properties
+     constructor(questionIndex, endpoint, questionContent, widgets) {
+          super(questionIndex, endpoint, questionContent, widgets); // Initialize common properties
 
           // TODO handle multiple widgets
           const widgetsArray = Object.values(item.question.widgets || {});
@@ -279,8 +294,8 @@ export class Orderer extends Question {
  * 
  */
 export class Radio extends Question {
-     constructor(questionIndex, endpoint, item) {
-          super(questionIndex, endpoint, item); // Initialize common properties
+     constructor(questionIndex, endpoint, questionContent, widgets) {
+          super(questionIndex, endpoint, questionContent, widgets); // Initialize common properties
 
           // TODO handle multiple widgets
           const widgetsArray = Object.values(item.question.widgets || {});
@@ -364,8 +379,8 @@ export class Radio extends Question {
  * 
  */
 export class Dropdown extends Question {
-     constructor(questionIndex, endpoint, item) {
-          super(questionIndex, endpoint, item); // Initialize common properties
+     constructor(questionIndex, endpoint, questionContent, widgets) {
+          super(questionIndex, endpoint, questionContent, widgets); // Initialize common properties
 
            // TODO handle multiple widgets
           const widgetsArray = Object.values(item.question.widgets || {});
@@ -445,8 +460,8 @@ export class Dropdown extends Question {
     }
  */
 export class Sorter extends Question {
-     constructor(questionIndex, endpoint, item) {
-          super(questionIndex, endpoint, item); // Initialize common properties
+     constructor(questionIndex, endpoint, questionContent, widgets) {
+          super(questionIndex, endpoint, questionContent, widgets); // Initialize common properties
 
           const widgetsArray = Object.values(item.question.widgets || {});
           const widget = widgetsArray.find(w => w.type === 'sorter');
@@ -572,8 +587,8 @@ export class Sorter extends Question {
 
 */
 export class Expression extends Question {
-     constructor(questionIndex, endpoint, item) {
-          super(questionIndex, endpoint, item); // Initialize common properties
+     constructor(questionIndex, endpoint, questionContent, widgets) {
+          super(questionIndex, endpoint, questionContent, widgets); // Initialize common properties
 
           const widgetsArray = Object.values(item.question.widgets || {});
 
@@ -649,8 +664,8 @@ export class Expression extends Question {
     }
 */
 export class Matcher extends Question {
-     constructor(questionIndex, endpoint, item) {
-          super(questionIndex, endpoint, item); // Initialize common properties
+     constructor(questionIndex, endpoint, questionContent, widgets) {
+          super(questionIndex, endpoint, questionContent, widgets); // Initialize common properties
 
           const widgetsArray = Object.values(item.question.widgets || {});
           const widget = widgetsArray.find(w => w.type === 'matcher');
@@ -744,8 +759,8 @@ export class Matcher extends Question {
 
 export class Categorizer extends Question {
 
-     constructor(questionIndex, endpoint, item) {
-          super(questionIndex, endpoint, item); // Initialize common properties
+     constructor(questionIndex, endpoint, questionContent, widgets) {
+          super(questionIndex, endpoint, questionContent, widgets); // Initialize common properties
          
           const widgetsArray = Object.values(item.question.widgets || {});
           const widget = widgetsArray[0];
