@@ -4,6 +4,22 @@
 */
 import { xapiConfig } from "./score-tracker.js"
 
+/**
+ * Filters the user response to include only relevant keys that match with the widgets.
+ *
+ * @param {Object} userResponse - The complete user response object.
+ * @param {Array} widgets - The list of widgets for which to filter the response.
+ * @returns {Object} - The filtered user response object.
+ */
+function filterUserResponse(userResponse, widgets) {
+     return widgets.reduce((acc, widget) => {
+         if (userResponse[widget.key]) {
+             acc[widget.key] = userResponse[widget.key];
+         }
+         return acc;
+     }, {});
+ }
+
 export class Question {
      constructor(id, endpoint, questionContent, widgets) {
           this.widgets = widgets;
@@ -60,9 +76,7 @@ export class InputNumber extends Question {
      constructor(questionIndex, endpoint, questionContent, widgets) {
           super(questionIndex, endpoint, questionContent, widgets); // Initialize common properties
 
-          const widgetsArray = Object.values(widgets || {});
-
-          const correctResponseString = widgetsArray
+          const correctResponseString = widgets
                .map(widget => widget.options?.value || options.answers?.[0]?.value)  // Extract value from options if available
                .filter(value => value !== undefined)  // Filter out any undefined values
                .join("[,]");
@@ -88,12 +102,7 @@ export class InputNumber extends Question {
                userResponseString = this.object.definition.correctResponsesPattern[0];
           } else {
 
-               const filteredResponse = this.widgets.reduce((acc, widget) => {
-                    if (userResponse[widget.key]) {
-                         acc[widget.key] = userResponse[widget.key];
-                     }
-                    return acc;
-                }, {});
+               const filteredResponse = filterUserResponse(userResponse, this.widgets);
 
                const userValuesArray = Object.values(filteredResponse).map(item => item.currentValue)
 
@@ -170,26 +179,18 @@ export class Orderer extends Question {
      constructor(questionIndex, endpoint, questionContent, widgets) {
           super(questionIndex, endpoint, questionContent, widgets); // Initialize common properties
 
-          // TODO handle multiple widgets
-          const widgetsArray = Object.values(item.question.widgets || {});
-          const widget = widgetsArray.find(w => w.type === 'orderer');
+          // indiviual widget would always only have 1 item in the array
+          const widget = widgets[0]
 
-          // Ensure widget options exist
-          if (!widget || !widget.options) {
-               throw new Error("Invalid widget data for Orderer");
-          }
-
-          const choices = processChoicesWidgetData(widget)
+          const choices = processChoicesWidgetData(widget.options.options)
 
           const correctResponseIds = widget.options.correctOptions.map(correctOption => {
                // Find the corresponding choice by matching content
-               const matchingChoice = choices.find(choice => choice.description[xapiConfig.language] === correctOption.content);
-               // Return the ID of the matching choice
-               return matchingChoice ? matchingChoice.id : null;
+               return getMatchingChoiceIdByContent(correctOption.content, choices, xapiConfig.language)
           })
                // Filter out any null values (in case no match was found) and join the IDs
-               .filter(id => id !== null)
-               .join("[,]");
+          .filter(id => id !== null)
+          .join("[,]");
 
           this.object.definition.choices = choices
           this.object.definition.interactionType = "sequencing"
@@ -197,6 +198,17 @@ export class Orderer extends Question {
 
      }
 
+
+     /*
+     {
+     "orderer 1": {
+        "current": [
+            "![](./bc3ac45347f3556ba8169b59ae452b01/images/5215f28ed641e8658caad9a61bbf3619.png)"
+        ]
+          }
+     }
+
+     */
      generateResult(userResponse, success, duration) {
           let result = super.generateResult(userResponse, success, duration)
 
@@ -205,14 +217,15 @@ export class Orderer extends Question {
           if (success) {
                userResponseString = this.object.definition.correctResponsesPattern[0];
           } else {
-               const userValuesArray = Object.keys(userResponse)
-                    .flatMap(key => userResponse[key].current);
+
+               const filteredResponse = filterUserResponse(userResponse, this.widgets);
+
+               const userValuesArray = Object.values(filteredResponse).flatMap(item => item.current)
 
                userResponseString = userValuesArray
                     .map(response => {
                          // Find the matching choice based on the response content
-                         const matchingChoice = this.object.definition.choices.find(choice => choice.description[[xapiConfig.language]] === response);
-                         return matchingChoice ? matchingChoice.id : null;
+                         return getMatchingChoiceIdByContent(response, this.object.definition.choices, xapiConfig.language)
                     })
                     // Filter out any null values (i.e., unmatched responses)
                     .filter(id => id !== null)
@@ -306,7 +319,7 @@ export class Radio extends Question {
                throw new Error("Invalid widget data for Radio");
           }
 
-          const choices = processChoicesWidgetData(widget)
+          const choices = processChoicesWidgetData(widget.options.choices)
 
           const correctResponseIds = choices
                .filter(choice => choice.correct) // Filter for correct options
@@ -391,7 +404,7 @@ export class Dropdown extends Question {
                throw new Error("Invalid widget data for Radio");
           }
            
-          const choices = processChoicesWidgetData(widget)
+          const choices = processChoicesWidgetData(widget.options.choices)
 
           const correctResponseIds = choices
           .filter(choice => choice.correct) // Filter for correct options
@@ -855,9 +868,9 @@ function generateCombinations(arrays, prefix = []) {
 }
 
 
-function processChoicesWidgetData(widgetData) {
+function processChoicesWidgetData(choicesList) {
 
-     const choices = widgetData.options.choices.map((option, index) => {
+     const choices = choicesList.map((option, index) => {
           const id = `choice${index + 1}`;
           return {
                id: id,
@@ -871,5 +884,21 @@ function processChoicesWidgetData(widgetData) {
      return choices
 }
 
+/**
+ * Matches the content to the corresponding choice in the choices list.
+ *
+ * @param {String} content - The content to be matched.
+ * @param {Array} choices - The list of choices to search in.
+ * @param {String} language - The language key used for matching.
+ * @returns {String|null} - Returns the ID of the matching choice, or null if no match is found.
+ */
+function getMatchingChoiceIdByContent(content, choices, language) {
+     const matchingChoice = choices.find(choice => {
+         const choiceDescription = choice.description[language] || Object.values(choice.description)[0];
+         return choiceDescription === content;
+     });
+ 
+     return matchingChoice?.id ?? null
+ }
 
 
