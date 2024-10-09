@@ -4,6 +4,8 @@
 */
 import { xapiConfig } from "./score-tracker.js"
 
+const NONE_OF_THE_ABOVE = "None of the Above"
+
 /**
  * Filters the user response to include only relevant keys that match with the widgets.
  *
@@ -12,12 +14,12 @@ import { xapiConfig } from "./score-tracker.js"
  * @returns {Object} - The filtered user response object.
  */
 function filterUserResponse(userResponse, widgets) {
-     return widgets.reduce((acc, widget) => {
-         if (userResponse[widget.key]) {
-             acc[widget.key] = userResponse[widget.key];
-         }
-         return acc;
-     }, {});
+      return widgets.reduce((acc, widget) => {
+        if (userResponse[widget.key]) {
+            acc.push(userResponse[widget.key]);
+        }
+        return acc;
+    }, []);
  }
 
 export class Question {
@@ -104,7 +106,7 @@ export class InputNumber extends Question {
 
                const filteredResponse = filterUserResponse(userResponse, this.widgets);
 
-               const userValuesArray = Object.values(filteredResponse).map(item => item.currentValue)
+               const userValuesArray = filteredResponse.map(item => item.currentValue)
 
                userResponseString = userValuesArray.join("[,]");
           }
@@ -220,9 +222,7 @@ export class Orderer extends Question {
 
                const filteredResponse = filterUserResponse(userResponse, this.widgets);
 
-               const userValuesArray = Object.values(filteredResponse).flatMap(item => item.current)
-
-               userResponseString = userValuesArray
+               userResponseString = filteredResponse.flatMap(item => item.current)
                     .map(response => {
                          // Find the matching choice based on the response content
                          return getMatchingChoiceIdByContent(response, this.object.definition.choices, xapiConfig.language)
@@ -310,14 +310,7 @@ export class Radio extends Question {
      constructor(questionIndex, endpoint, questionContent, widgets) {
           super(questionIndex, endpoint, questionContent, widgets); // Initialize common properties
 
-          // TODO handle multiple widgets
-          const widgetsArray = Object.values(item.question.widgets || {});
-          const widget = widgetsArray.find(w => w.type === 'radio');
-
-          // Ensure widget options exist
-          if (!widget || !widget.options || !widget.options.choices) {
-               throw new Error("Invalid widget data for Radio");
-          }
+          const widget = widgets[0];
 
           const choices = processChoicesWidgetData(widget.options.choices)
 
@@ -332,6 +325,21 @@ export class Radio extends Question {
 
      }
 
+     /*
+     {
+          "radio 1": {
+               "countChoices": false,
+               "choicesSelected": [
+                    false,
+                    true,
+                    false
+               ],
+               "numCorrect": 1,
+               "noneOfTheAboveIndex": null,
+               "noneOfTheAboveSelected": false
+          }
+     }
+     */
      generateResult(userResponse, success, duration) {
           let result = super.generateResult(userResponse, success, duration)
           let userResponseString;
@@ -339,11 +347,11 @@ export class Radio extends Question {
           if (success) {
                userResponseString = this.object.definition.correctResponsesPattern[0];
           } else {
-               const questionKey = Object.keys(userResponse)[0]; // Assuming there's only one question response
-               const radioResponse = userResponse[questionKey]; // Access the specific question response
-               
+               // deconstruct and get the first value of the response
+               const [radioResponse] = filterUserResponse(userResponse, this.widgets)
+
                if (radioResponse.noneOfTheAboveSelected) {
-                    const noneOfTheAboveChoice = this.object.definition.choices.find(choice => choice.description[xapiConfig.language] === "None of the Above");
+                    const noneOfTheAboveChoice = this.object.definition.choices.find(choice => choice.description[xapiConfig.language] === NONE_OF_THE_ABOVE);
                     userResponseString = noneOfTheAboveChoice ? noneOfTheAboveChoice.id : null;
                 } else {
                     const userChoices = this.object.definition.choices.map((choice, index) => {
@@ -875,7 +883,7 @@ function processChoicesWidgetData(choicesList) {
           return {
                id: id,
                description: {
-                    [xapiConfig.language]: option.isNoneOfTheAbove ? "None of the Above" : option.content
+                    [xapiConfig.language]: option.isNoneOfTheAbove ? NONE_OF_THE_ABOVE : option.content
                },
                correct: option.correct
           };

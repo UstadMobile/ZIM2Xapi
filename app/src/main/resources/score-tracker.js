@@ -239,7 +239,7 @@ function addParentAndGroupingToContext(context, contextActivitiesId = null) {
             updatedContext.contextActivities.grouping = [];
         }
     
-        contextIds.forEach(id => {
+        contextActivitiesId.forEach(id => {
             updatedContext.contextActivities.grouping.push({
                 id: `${xapiConfig.object.id}/question-${id}`,
             });
