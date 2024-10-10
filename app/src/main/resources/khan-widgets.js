@@ -79,7 +79,7 @@ export class InputNumber extends Question {
           super(questionIndex, endpoint, questionContent, widgets); // Initialize common properties
 
           const correctResponseString = widgets
-               .map(widget => widget.options?.value || options.answers?.[0]?.value)  // Extract value from options if available
+               .map(widget => widget.options?.value || widget.options.answers?.[0]?.value)  // Extract value from options if available
                .filter(value => value !== undefined)  // Filter out any undefined values
                .join("[,]");
 

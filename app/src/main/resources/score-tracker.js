@@ -11,12 +11,10 @@ let lastProgressTime = startExerciseTime;
 // GROUP Widget - Contains multiple widgets
 // Groupable - Widgets are grouped if they are of the same type and consecutive.
 // Individual - Widgets handled individually
-// Unsupported - These widgets provide content or context but do not have direct user interaction to record. 
 // Default - Any missing widgets not mentioned only record question data
 const GROUP_WIDGET = "group-widget";
 const GROUPABLE = "groupable";
 const INDIVIDUAL = "individual";
-const UNSUPPORTED = "unsupported"
 const DEFAULT = "default"
 
 // supported khan academy interaction types
@@ -32,13 +30,7 @@ const interactionTypeMapping = {
     "matcher": { class: Widgets.Matcher, category: INDIVIDUAL },
     "numeric-input": { class: Widgets.InputNumber, category: GROUPABLE },
     "categorizer": { class: Widgets.Categorizer, category: GROUPABLE },
-    "image": { class: null, category: UNSUPPORTED },
-    "definition": { class: null, category: UNSUPPORTED },
-    "explanation": { class: null, category: UNSUPPORTED },
-    "passage": { class: null, category: UNSUPPORTED },
-    "passage-ref": { class: null, category: UNSUPPORTED },
-    "video": { class: null, category: UNSUPPORTED },
-    "graded-group": { class: null, category: GROUP_WIDGET }
+    // "graded-group": { class: null, category: GROUP_WIDGET } // unable to find a course to test on
 };
 
 // Function to wait for vueApp to be initialized
@@ -184,6 +176,14 @@ function createContextFromUrlParams(urlParams) {
     return context;
 }
 
+/**
+ * Parses the URL to retrieve xAPI launch parameters and configure xAPI settings.
+ * If `endpoint`, `auth`, and `actor` parameters are found, it sets up xAPI connectivity.
+ * Fetches additional configuration from a JSON file and constructs the xAPI context object.
+ *
+ * @returns {Promise<void>} Resolves when xAPI configuration is successfully parsed or if xAPI is not enabled.
+ * Logs relevant error messages in case of failed attempts to load the configuration.
+ */
 function parseXAPILaunchParameters() {
     const urlParams = new URLSearchParams(window.location.search);
     const endpoint = urlParams.get('endpoint');
@@ -250,15 +250,17 @@ function addParentAndGroupingToContext(context, contextActivitiesId = null) {
 }
 
 /**
- * Creates an xAPI statement object with the given parameters.
+ * Constructs an xAPI statement with the provided parameters.
  *
- * @param {string} verb - The action being performed, represented as a verb. This should be a valid xAPI verb.
- * @param {object} object - The activity object that the verb is acting upon, following the xAPI activity structure.
- * @param {object} [result=null] - Optional. The result of the activity, including properties such as score, success, and duration.
- * @param {object} [context=xapiConfig.context] - Optional. The context in which the statement is generated, providing additional information about the activity. Defaults to `xapiConfig.context`.
- * @param {object} [actor=xapiConfig.actor] - Optional. The actor (user) performing the action. Defaults to `xapiConfig.actor`.
+ * @param {string} verb - The verb ID that describes the action (e.g., "answered", "attempted").
+ * @param {object} object - The activity object that the verb is acting upon, formatted according to xAPI.
+ * @param {object} [result=null] - Optional. Represents the result of the activity, including fields such as score, success, and duration.
+ * @param {object} [context=xapiConfig.context] - Optional. Provides additional context like parent activities or grouping information.
+ * @param {object} [actor=xapiConfig.actor] - Optional. The actor performing the action, usually representing the learner.
  *
- * @returns {object} The constructed xAPI statement object, ready to be sent to an LRS (Learning Record Store).
+ * @returns {object} The constructed xAPI statement ready for dispatch to the LRS.
+ *
+ * Usage: This function should be used for generating xAPI statements, which can then be sent using `sendXAPIStatement`.
  */
 function createXAPIStatement(
     verb, object, result = null,
@@ -474,30 +476,43 @@ function handleAnswer(questionIndex, isCorrect) {
     }
 }
 /**
- * Main function to process a given question object and generate xAPI statements based on different widget types.
+ * Groups widgets from a given question to optimize xAPI statement generation.
  *
- * This function processes widgets in the question to categorize them as individual, groupable, or unsupported,
- * and then generates xAPI statements accordingly. The main focus is to group widgets in a way that reduces the number
- * of xAPI statements while preserving the context.
+ * This function aims to logically group the widgets present in a question based on their types.
+ * The primary purpose is to reduce the number of xAPI statements by combining certain widgets
+ * into groups, while keeping others as individual entities where necessary.
  *
- * Assumptions and Key Behaviors:
- * - Widgets are grouped if they are of the same type and consecutive.
- * - Widgets that default to only question data are added once to the group.
- * - Unsupported widgets generate a single statement, irrespective of their count.
- * - Grouped widgets are expanded into individual widgets before processing.
- * - The main types of widgets are: individual, groupable, default question data, unsupported, and grouped.
- * - Grouped widgets (e.g., "graded-group") do not produce statements themselves but instead have their inner widgets processed.
+ * **Key Behaviors and Grouping Logic:**
+ * - **Widget Types**: Widgets are categorized as `INDIVIDUAL`, `GROUPABLE`, `GROUP_WIDGET` or `DEFAULT`.
+ * - **Consecutive Widgets**: Widgets of the same type that are `GROUPABLE` and are consecutive can be combined into a group.
+ * - **Individual Widgets**: Widgets categorized as `INDIVIDUAL` require their own xAPI statement and are not grouped with others.
+ * - **Default Widgets**: Widgets providing context or supporting information without user interaction (`DEFAULT`) are collected together. These do not generate xAPI statements for individual user interactions.
+ * - **Nested Group Widgets**: Widgets categorized as `GROUP_WIDGET` (e.g., `graded-group`) contain other widgets and require recursive processing of their children to determine the right grouping.
+
+ * **Grouping Mechanism:**
+ * - Iterates through all widgets in the question.
+ * - For each widget:
+ *   1. **GROUP_WIDGET**: If the widget itself is a container (e.g., `graded-group`), its child widgets are processed recursively.
+ *   2. **INDIVIDUAL**: Ends any ongoing group and adds the widget as a separate entity.
+ *   3. **GROUPABLE**: Continues an existing group if the widget type matches, or starts a new group otherwise.
+ *   4. **DEFAULT**: Adds the widget to a collective group but does not trigger xAPI statements directly.
+ * - Any remaining widgets in the `currentGroup` are added to the `groupedWidgets` list at the end of processing.
+ * - Widgets that do not fit the `INDIVIDUAL` or `GROUPABLE` categories are grouped under `unsupportedAndDefaultGroup`.
  *
- * Processing logic:
- * - Iterate through each widget and categorize it based on its type.
- * - Maintain a `currentGroup` to handle widgets that can be grouped together.
- * - At the end of the iteration, any remaining group is pushed to the list of grouped widgets.
- * - Inner widgets from group widgets are processed with the same grouping rules.
- * - Finally, generate xAPI statements based on the grouped widgets list.
+ * **Returns**:
+ * - An array of grouped widget objects, where each object contains:
+ *   - `widgets`: An array of widgets that belong to this group.
+ *   - `type`: The type of widget (e.g., `GROUPABLE`, `INDIVIDUAL`, `UNSUPPORTED`).
+ * 
+ * **Example Usage**:
+ * - If a question contains multiple consecutive `input-number` widgets, they are grouped together.
+ * - If a `radio` widget follows a `dropdown`, each of them is treated as an `INDIVIDUAL` widget.
  *
  * @param {Object} item - The question item containing widget information to be processed.
- * @property {Object} item.question - The question object.
- * @property {Object} item.question.widgets - The widgets object, where each key is a widget identifier and the value is the widget data.
+ * @property {Object} item.question - The question object containing content and widget details.
+ * @property {Object} item.question.widgets - An object containing widget data, where each key is a widget identifier and value is the widget configuration.
+ * 
+ * @returns {Array<Object>} - An array of grouped widgets, which is used to generate the appropriate xAPI statements.
  */
 function groupWidgets(item) {
     try {
@@ -514,16 +529,20 @@ function groupWidgets(item) {
                 console.warn(`Invalid widget data for widgetKey: ${widgetKey}`);
                 return;
             }
-
+            // Each widget gets associated with its key 
             const widgetWithKey = { ...widget, key: widgetKey };
+
+            // Decide the handling logic based on widget type
             currentGroup = handleWidget(widgetWithKey, groupedWidgets, currentGroup, unsupportedAndDefaultGroup)        
         });
 
-        // Push the last group if it exists
+        // If a group is still in progress, push it to the groupedWidgets list
         if (currentGroup) {
+            console.log("Pushing current group to groupedWidgets after processing", currentGroup);
             groupedWidgets.push(currentGroup);
         }
 
+        // If unsupported and default widgets were collected, add them to the groupedWidgets list
         if (unsupportedAndDefaultGroup.widgets.length > 0) {
             console.log("Pushing unsupported and default widgets to groupedWidgets.");
             groupedWidgets.push(unsupportedAndDefaultGroup);
@@ -550,7 +569,7 @@ function handleWidget(widget, groupedWidgets, currentGroup, unsupportedAndDefaul
     const widgetCategory = interactionTypeMapping[widget.type]?.category || DEFAULT;
     switch (widgetCategory) {
         case GROUP_WIDGET:
-            handleGroupWidget(widget, groupedWidgets, currentGroup);
+            handleGroupWidget(widget, groupedWidgets, currentGroup, unsupportedAndDefaultGroup);
             break;
         case INDIVIDUAL:
             handleIndividualWidget(widget, groupedWidgets, currentGroup);
@@ -577,14 +596,21 @@ function isValidWidget(widget) {
 }
 
 
-function handleGroupWidget(widget, groupedWidgets, currentGroup) {
+function handleGroupWidget(widget, groupedWidgets, currentGroup, unsupportedAndDefaultGroup) {
     console.log("Widget is a group widget, processing inner widgets...");
     const innerWidgets = widget.options.widgets;
     const innerWidgetKeys = Object.keys(innerWidgets);
     innerWidgetKeys.forEach(innerWidgetKey => {
         const innerWidget = { ...innerWidgets[innerWidgetKey], key: innerWidgetKey };
-        currentGroup = handleWidget(innerWidget, groupedWidgets, currentGroup);
+        console.log(`processing innerWidget ${innerWidgetKey} of type ${innerWidget.type}`)
+        currentGroup = handleWidget(innerWidget, groupedWidgets, currentGroup, unsupportedAndDefaultGroup);
+        console.log(`Updated current group:`, currentGroup);
     });
+
+    if (currentGroup) {
+        console.log("Pushing current group to groupedWidgets after processing group widget:", currentGroup);
+        groupedWidgets.push(currentGroup);
+    }
 }
 
 /**
@@ -619,6 +645,14 @@ function handleGroupableWidget(widget, groupedWidgets, currentGroup) {
     return currentGroup;
 }
 
+
+/**
+ * Generates a unique question identifier used for xAPI statements.
+ *
+ * @param {number} questionIndex - The index of the current question.
+ * @param {number|null} [subIndex=null] - An optional sub-index to differentiate sub-questions (e.g., for multiple statements per question).
+ * @returns {string} - The generated question ID in the form of '1', '1a', etc.
+ */
 function generateQuestionId(questionIndex, subIndex = null) {
     let questionId = `${questionIndex + 1}`;
     if (subIndex !== null) {
@@ -626,27 +660,23 @@ function generateQuestionId(questionIndex, subIndex = null) {
     }
     return questionId;
 }
+
 /**
- * Processes the grouped widgets to generate xAPI statements.
+ * Processes grouped widgets to generate xAPI statement information.
  *
- * After grouping widgets, this function iterates over the groups and generates xAPI statements for each group.
- * The generated statements are unique, and their IDs are formatted depending on the number of groups:
- * - If there is only one statement, it uses a simple identifier (e.g., "question-1").
- * - If there are multiple statements for a question, they are assigned sub-identifiers (e.g., "question-1-a", "question-1-b").
- *
- * Key considerations:
- * - Ensures that each widget or group of widgets gets a unique identifier.
- * - Minimizes redundancy by generating fewer statements when possible.
+ * This function generates a list of xAPI statements by:
+ * - Identifying grouped widgets that need a single or multiple xAPI statements.
+ * - Handling individual widgets or widgets grouped by type to minimize redundancy.
+ * - Creating distinct question identifiers (e.g., `question-1-a`, `question-1-b`) for each widget group.
  *
  * @param {Array} groupedWidgets - The list of grouped widgets.
+ * @param {number} questionIndex - The index of the current question.
+ * @returns {Array} - A list of objects containing the information required for generating xAPI statements.
  */
 function processGroupedWidgets(groupedWidgets, questionIndex) {
     console.log("processGroupedWidgets called with groupedWidgets:", groupedWidgets);
-    const baseId = xapiConfig.object.id;
-
     const actionableGroups = groupedWidgets.filter(
-        group => group.type !== UNSUPPORTED 
-            && group.type !== DEFAULT);
+        group => group.type !== DEFAULT);
 
     let statementsToGenerate = [];
 
@@ -661,8 +691,10 @@ function processGroupedWidgets(groupedWidgets, questionIndex) {
         });
     } else {
         const group = actionableGroups.length === 1 ? actionableGroups[0] : groupedWidgets[0];
-        const questionId = generateQuestionId(baseId, questionIndex);
-        statementsToGenerate.push({ id: questionId, group: group, contextActivityIds: null });
+        if(group){
+            const questionId = generateQuestionId(questionIndex);
+            statementsToGenerate.push({ id: questionId, group: group, contextActivityIds: null });
+        }
     }
 
     return statementsToGenerate;
@@ -689,3 +721,5 @@ function generateXAPIStatement(questionId, group, questionContent, contextActivi
     sendQuestionXAPIStatement(questionObject, questionResult, questionContext);
 }
 
+
+export { groupWidgets, processGroupedWidgets }
