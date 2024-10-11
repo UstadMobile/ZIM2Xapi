@@ -19,10 +19,10 @@ class AddxAPIStatementUseCase {
 
         val indexDoc = Jsoup.parse(indexFile)
         val scoreScript = indexDoc.createElement("script")
-        scoreScript.attr("src", "/assets/perseus/score-tracker.js")
+        scoreScript.attr("src", "./assets/perseus/score-tracker.js")
             .attr("type", "module")
         val widgetsScript = indexDoc.createElement("script")
-        widgetsScript.attr("src", "/assets/perseus/khan-widgets.js")
+        widgetsScript.attr("src", "./assets/perseus/khan-widgets.js")
             .attr("type", "module")
         indexDoc.body().appendChild(scoreScript).appendChild(widgetsScript)
 

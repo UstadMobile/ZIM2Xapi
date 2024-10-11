@@ -33,6 +33,18 @@ const interactionTypeMapping = {
     // "graded-group": { class: null, category: GROUP_WIDGET } // unable to find a course to test on
 };
 
+parseXAPILaunchParameters()
+    .then(() => xapiEnabled && waitForVueApp())
+    .then((vueApp) => {
+
+        if (!xapiEnabled) return
+
+        console.log("Vue app is available. Running score tracker...");
+
+        sendStartXAPIStatement(vueApp);
+        initializeVueAppWatchers(vueApp);
+});
+
 // Function to wait for vueApp to be initialized
 function waitForVueApp() {
     return new Promise((resolve) => {
@@ -48,18 +60,6 @@ function waitForVueApp() {
         checkVueApp();
     });
 }
-
-parseXAPILaunchParameters()
-    .then(() => xapiEnabled && waitForVueApp())
-    .then((vueApp) => {
-
-        if (!xapiEnabled) return
-
-        console.log("Vue app is available. Running score tracker...");
-
-        sendStartXAPIStatement(vueApp);
-        initializeVueAppWatchers(vueApp);
-});
 
 /**
  * Converts a duration given in seconds to an ISO 8601 duration string.
@@ -191,7 +191,6 @@ function parseXAPILaunchParameters() {
     const actor = urlParams.get('actor');
 
     if (endpoint && auth && actor) {
-        xapiEnabled = true;
 
         return fetch('xapiobject.json')
             .then(response => {
@@ -210,6 +209,7 @@ function parseXAPILaunchParameters() {
                 };
                 xapiConfig.language = (xapiConfig?.context?.language ?? Object.keys(objectData.definition.name)[0]) || "en";
                 console.log('xAPI enabled with config:', xapiConfig);
+                xapiEnabled = true;
                 return;
             }).catch(error => {
                 console.error('Failed to load xAPI object JSON:', error);

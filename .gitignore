@@ -12,3 +12,5 @@ out/
 node_modules
 
 .kotlin
+
+js-tests/e2e/cypress/screenshots/

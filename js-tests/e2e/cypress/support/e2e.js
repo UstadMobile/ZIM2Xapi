@@ -34,6 +34,40 @@ Cypress.Commands.add('convertZimFile', (zimFileName) => {
     .should('eq', 0)
 });
 
+Cypress.Commands.add('interceptAttempted', (expectedActor, expectedVerb) => {
+    // Intercepts the "attempted" request and verifies the request body
+    cy.intercept('POST', '**/statement/', (req) => {
+        if (req.body.verb && req.body.verb.id === 'http://adlnet.gov/expapi/verbs/attempted') {
+            // Assertions for the "attempted" statement
+            expect(req.body.actor).to.deep.equal(expectedActor);
+            expect(req.body.verb.id).to.equal(expectedVerb);
+
+            // Mock response
+            req.reply({
+                statusCode: 200,
+                body: { message: 'Attempted statement received successfully' }
+            });
+        }
+    }).as('attemptedStatement');
+});
+
+Cypress.Commands.add('interceptProgress', (expectedActor, expectedVerb) => {
+    // Intercepts the "progressed" request and verifies the request body
+    cy.intercept('POST', '**/statement/', (req) => {
+        if (req.body.verb && req.body.verb.id === 'http://adlnet.gov/expapi/verbs/progressed') {
+            // Assertions for the "progressed" statement
+            expect(req.body.actor).to.deep.equal(expectedActor);
+            expect(req.body.verb.id).to.equal(expectedVerb);
+
+            // Mock response
+            req.reply({
+                statusCode: 200,
+                body: { message: 'Progress statement received successfully' }
+            });
+        }
+    }).as('progressStatement');
+});
+
 afterEach(() => {
     cy.task('cleanTempContent')
     .then(() => {
