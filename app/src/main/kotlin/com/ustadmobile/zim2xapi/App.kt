@@ -5,14 +5,13 @@ package com.ustadmobile.zim2xapi
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.main
-import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.core.subcommands
-import com.github.ajalt.clikt.parameters.options.convert
-import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.required
+import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.file
+import com.github.ajalt.clikt.parameters.types.int
 import com.ustadmobile.zim2xapi.Client.client
 import com.ustadmobile.zim2xapi.Client.json
+import com.ustadmobile.zim2xapi.utils.SysPathUtil
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import java.io.File
@@ -25,6 +24,7 @@ object Client {
 
     val json: Json by lazy {
         Json {
+            encodeDefaults = true
             ignoreUnknownKeys = true
         }
     }
@@ -98,6 +98,15 @@ class DownloadTopic : CliktCommand(name = "convert") {
 
     val fileName by option("-name", help = "The name of the xApi file")
 
+    val passingGrade by option(
+        "-grade",
+        help = "The passing grade as a percentage (0-100). Default is 50%"
+    ).int().default(50)
+        .validate {
+            require(it in 0..100)
+            { "Passing grade must be between 0 and 100." }
+        }
+
     override fun run() {
 
         val channelId = channelId
@@ -124,7 +133,7 @@ class DownloadTopic : CliktCommand(name = "convert") {
                     fileName ?: topicId
                 )
 
-            }catch (e: Exception){
+            } catch (e: Exception) {
                 echo(e.stackTrace, err = true)
                 echo(e.message, err = true)
                 return
@@ -156,17 +165,18 @@ class DownloadTopic : CliktCommand(name = "convert") {
             ExtractZimUseCase(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
 
             // fix any exceptions found in the folder
-            FixExtractZimExceptions(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
+            FixExtractZimExceptionsUseCase(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
 
             // create the xApi zip file
-            CreateXapiFileUseCase(zimDumpProcess).invoke(
+            CreateXapiFileUseCase(zimDumpProcess, AddxAPIStatementUseCase(), json).invoke(
                 extractedZimFolder,
                 outputDir,
                 fileName,
-                createdZimFile
+                createdZimFile,
+                passingGrade
             )
 
-        }catch (e: Exception){
+        } catch (e: Exception) {
             echo(e.stackTrace, err = true)
             echo(e.message, err = true)
         }

@@ -1,5 +1,6 @@
 package com.ustadmobile.zim2xapi
 
+import com.ustadmobile.zim2xapi.models.Topic
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request

@@ -32,7 +32,40 @@ kotlin {
     jvmToolchain(17)
 }
 
+version = "1.0.0"
+
 application {
     // Define the main class for the application.
-    mainClass = "org.example.AppKt"
+    mainClass = "com.ustadmobile.zim2xapi.AppKt"
+}
+
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = application.mainClass // Entry point for your application
+    }
+
+    // Add runtime dependencies into the JAR file
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    archiveBaseName = "zim2xapi"
+    archiveVersion = version.toString()
+}
+
+tasks.register<Copy>("copyJarToJsTests") {
+    dependsOn(tasks.jar) // Ensure the JAR task runs before copying
+
+    val jarTask = tasks.jar.get()
+    val jarFile = jarTask.archiveFile.get().asFile
+
+    from(jarFile)
+    into("../js-tests/build/libs")
+
+    rename { "zim2xapi.jar" }
+
+}
+
+tasks.build {
+    dependsOn("copyJarToJsTests")
 }
