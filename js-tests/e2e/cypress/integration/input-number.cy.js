@@ -1,11 +1,11 @@
-import { xapiConfig } from "../../../../app/src/main/resources/score-tracker";
-
 describe('Input Number Tests', () => {
 
     it('should complete input number interaction and generate xAPI statements', () => {
 
         const zimFile = "input-number"
         const baseUrl = `${zimFile}/index.html`
+
+        cy.convertZimFile(zimFile);
 
         const actor = {
             name: ["Project Tin Can"],
@@ -19,20 +19,77 @@ describe('Input Number Tests', () => {
             actor: JSON.stringify(actor)
         };
         const queryString = new URLSearchParams(queryParams).toString();
-        cy.convertZimFile(zimFile);
+    
+        const expectedAttemptedVerb = {
+            id: "http://adlnet.gov/expapi/verbs/attempted",
+            display: {
+              "en": "attempted"
+            }
+          };
+          const expectedContext = {
+            registration: "input-number-registration"
+          };
 
-        const attemptedVerb = 'http://adlnet.gov/expapi/verbs/attempted';
-        const progressedVerb = 'http://adlnet.gov/expapi/verbs/progressed';
-
-        // Step 3: Use custom commands to intercept the "attempted" and "progress" xAPI requests
-        cy.interceptAttempted(actor, attemptedVerb);
-        cy.interceptProgress(actor, progressedVerb);
+        cy.interceptAttempted(actor, expectedAttemptedVerb, expectedContext);
 
         cy.visit(`${baseUrl}?${queryString}`);
 
         cy.get('body').should('be.visible');
 
-        cy.wait('@attemptedStatement').its('response.statusCode').should('eq', 200);
+        cy.getxapiobject(zimFile).then((expectedObject) => {
+
+            cy.wait('@attemptedStatement').then((interception) => {
+                const requestBody = interception.request.body;
+                
+                expect(requestBody.object).to.deep.equal(expectedObject);
+
+            })
+        });
+
+        const expectedCompletedVerb = {
+            id: "http://adlnet.gov/expapi/verbs/completed",
+            display: {
+              "en": "completed"
+            }
+          }; 
+
+          const expectedResult = {
+            score: {
+              scaled: 1,  
+              raw: 15,     
+              min: 0,       
+              max: 15
+            },
+            completion: true,
+            success: true
+          };
+          cy.interceptExerciseComplete(expectedCompletedVerb, expectedResult)
+
+        const questions = [
+            { answer: "119", questionNumber: "1" },
+            { answer: "105", questionNumber: "2" },
+            { answer: "99", questionNumber: "3" },
+            { answer: "111", questionNumber: "4" },
+            { answer: "101", questionNumber: "5" },
+            { answer: "101", questionNumber: "6" },
+            { answer: "120", questionNumber: "7" },
+            { answer: "108", questionNumber: "8" },
+            { answer: "106", questionNumber: "9" },
+            { answer: "115", questionNumber: "10" },
+            { answer: "118", questionNumber: "11" },
+            { answer: "109", questionNumber: "12" },
+            { answer: "103", questionNumber: "13" },
+            { answer: "104", questionNumber: "14" },
+            { answer: "99", questionNumber: "15" },
+          ];
+      
+          // Loop through the array and answer each question
+          questions.forEach((question) => {
+            cy.answerCorrectQuestion(question.answer, question.questionNumber);
+          });
+
+
+          cy.get(`.green-alert-text`).contains("Exercise Complete!")
 
     });
 

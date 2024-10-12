@@ -34,38 +34,105 @@ Cypress.Commands.add('convertZimFile', (zimFileName) => {
     .should('eq', 0)
 });
 
-Cypress.Commands.add('interceptAttempted', (expectedActor, expectedVerb) => {
+Cypress.Commands.add('getxapiobject', (zimFileName) => {
+
+    cy.request(`${zimFileName}/xapiobject.json`).then((response) => {
+        return response.body;
+    })
+
+})
+
+
+Cypress.Commands.add('interceptAttempted', (expectedActor, expectedVerb, expectedContext) => {
     // Intercepts the "attempted" request and verifies the request body
     cy.intercept('POST', '**/statement/', (req) => {
-        if (req.body.verb && req.body.verb.id === 'http://adlnet.gov/expapi/verbs/attempted') {
-            // Assertions for the "attempted" statement
-            expect(req.body.actor).to.deep.equal(expectedActor);
-            expect(req.body.verb.id).to.equal(expectedVerb);
 
+    if (req.body.verb.id === 'http://adlnet.gov/expapi/verbs/attempted') {
+
+        expect(req.body.actor).to.deep.equal(expectedActor);
+        expect(req.body.verb).to.deep.equal(expectedVerb);
+        expect(req.body.context).to.deep.equal(expectedContext);
             // Mock response
-            req.reply({
-                statusCode: 200,
-                body: { message: 'Attempted statement received successfully' }
-            });
-        }
+        req.reply({
+            statusCode: 200,
+            body: { message: 'Attempted statement received successfully' }
+        });
+
+    }
+    
     }).as('attemptedStatement');
 });
 
-Cypress.Commands.add('interceptProgress', (expectedActor, expectedVerb) => {
+Cypress.Commands.add('interceptProgress', (expectedVerb, expectedResult, expectedObject) => {
     // Intercepts the "progressed" request and verifies the request body
     cy.intercept('POST', '**/statement/', (req) => {
-        if (req.body.verb && req.body.verb.id === 'http://adlnet.gov/expapi/verbs/progressed') {
-            // Assertions for the "progressed" statement
-            expect(req.body.actor).to.deep.equal(expectedActor);
-            expect(req.body.verb.id).to.equal(expectedVerb);
+
+        if (req.body.verb.id === 'http://adlnet.gov/expapi/verbs/progressed') {
+
+            expect(req.body.verb).to.deep.equal(expectedVerb);
+            expect(req.body.result).to.deep.include(expectedResult);
+            expect(req.body.object).to.deep.include(expectedObject);
 
             // Mock response
             req.reply({
                 statusCode: 200,
-                body: { message: 'Progress statement received successfully' }
+                body: { message: 'Progress statement received successfully' }            
             });
+
         }
     }).as('progressStatement');
+});
+
+Cypress.Commands.add("interceptExerciseComplete", (expectedVerb, expectedResult) => {
+
+    cy.intercept('POST', '**/statement/', (req) => {
+
+        if(req.body.verb.id === "http://adlnet.gov/expapi/verbs/completed"){
+
+            expect(req.body.verb).to.deep.equal(expectedVerb);
+            expect(req.body.result).to.deep.include(expectedResult);
+    
+            req.reply({
+                statusCode: 200,
+                body: { message: 'Progress statement received successfully' }            
+            });
+        }
+
+    }).as("completeStatement")
+
+});
+
+Cypress.Commands.add('answerCorrectQuestion', (answer, questionNumber) => {
+
+    const expectedProgressedVerb = {
+        id: "http://adlnet.gov/expapi/verbs/progressed",
+        display: {
+          "en": "progressed"
+        }
+    }; 
+
+    const expectedResult = {
+        response: answer,
+        success: true
+      };
+
+      const expectedObject = {
+        objectType: "Activity",
+        definition: {
+          type: "http://adlnet.gov/expapi/activities/cmi.interaction",
+          interactionType: "numeric",
+          correctResponsesPattern: [answer]
+        }
+      };
+
+    cy.interceptProgress(expectedProgressedVerb, expectedResult, expectedObject);
+
+    cy.get(`#question-status > div`).contains(`Question: ${questionNumber} / 15`)
+    cy.get(`.perseus-input`).type(answer)
+    cy.get(`.checkanswer-btn`).click()
+    cy.contains('button', 'Next Question').click();
+
+    cy.wait('@progressStatement');
 });
 
 afterEach(() => {
