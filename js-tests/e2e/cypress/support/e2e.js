@@ -47,7 +47,7 @@ Cypress.Commands.add('interceptAttempted', (expectedActor, expectedVerb, expecte
     // Intercepts the "attempted" request and verifies the request body
     cy.intercept('POST', '**/statement/', (req) => {
 
-    if (req.body.verb.id === 'http://adlnet.gov/expapi/verbs/attempted') {
+    gif (req.body.verb.id === 'http://adlnet.gov/expapi/verbs/attempted') {
 
         expect(req.body.actor).to.deep.equal(expectedActor);
         expect(req.body.verb).to.deep.equal(expectedVerb);
