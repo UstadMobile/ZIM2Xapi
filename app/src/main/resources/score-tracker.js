@@ -417,6 +417,12 @@ function handleAnswerCheck(newVal, vueApp) {
             console.log("Answer incomplete");
             return; // Exit early if the answer is incomplete
     }
+    if(vueApp.questionIndex == vueApp.maxQuestionIndex){
+        // questionIndex is 0 based
+        // we are currently above the maxQuestionIndex
+        return;
+    }
+
     const success = newVal === 'truth'
 
     const attempted = handleAnswer(vueApp.questionIndex, success)

@@ -20,6 +20,8 @@ import './commands'
 // require('./commands')
 
 const path = require('path');
+import { VERBS } from './constants';
+
 
 Cypress.Commands.add('convertZimFile', (zimFileName) => {
 
@@ -35,107 +37,76 @@ Cypress.Commands.add('convertZimFile', (zimFileName) => {
 });
 
 Cypress.Commands.add('getxapiobject', (zimFileName) => {
-
-    cy.request(`${zimFileName}/xapiobject.json`).then((response) => {
-        return response.body;
-    })
-
-})
+    return cy.request(`${zimFileName}/xapiobject.json`).then((response) => {
+      return response.body;
+    });
+  });
 
 
-Cypress.Commands.add('interceptAttempted', (expectedActor, expectedVerb, expectedContext) => {
-    // Intercepts the "attempted" request and verifies the request body
+Cypress.Commands.add('interceptXapiStatement', (verb, alias, expectedVerb, expectedResult = null, expectedObject = null, expectedContext = null) => {
     cy.intercept('POST', '**/statement/', (req) => {
-
-    gif (req.body.verb.id === 'http://adlnet.gov/expapi/verbs/attempted') {
-
-        expect(req.body.actor).to.deep.equal(expectedActor);
+      if (req.body.verb.id === verb) {
+        req.alias = alias
         expect(req.body.verb).to.deep.equal(expectedVerb);
-        expect(req.body.context).to.deep.equal(expectedContext);
-            // Mock response
+        if (expectedResult) {
+          expect(req.body.result).to.deep.include(expectedResult);
+        }
+        if (expectedObject) {
+            Object.keys(expectedObject).forEach((key) => {
+              expect(req.body.object[key]).to.deep.include(expectedObject[key]);
+            });
+          }
+        if(expectedContext){
+            expect(req.body.context).to.deep.include(expectedContext)
+        }
         req.reply({
-            statusCode: 200,
-            body: { message: 'Attempted statement received successfully' }
+          statusCode: 200,
+          body: { message: `${verb} statement received successfully` }
         });
+      }
+    })
+  });
+  
+Cypress.Commands.add('submitAnswer', (answer, questionNumber, expectedObject, expectedResult) => {
 
-    }
-    
-    }).as('attemptedStatement');
-});
-
-Cypress.Commands.add('interceptProgress', (expectedVerb, expectedResult, expectedObject) => {
-    // Intercepts the "progressed" request and verifies the request body
-    cy.intercept('POST', '**/statement/', (req) => {
-
-        if (req.body.verb.id === 'http://adlnet.gov/expapi/verbs/progressed') {
-
-            expect(req.body.verb).to.deep.equal(expectedVerb);
-            expect(req.body.result).to.deep.include(expectedResult);
-            expect(req.body.object).to.deep.include(expectedObject);
-
-            // Mock response
-            req.reply({
-                statusCode: 200,
-                body: { message: 'Progress statement received successfully' }            
-            });
-
-        }
-    }).as('progressStatement');
-});
-
-Cypress.Commands.add("interceptExerciseComplete", (expectedVerb, expectedResult) => {
-
-    cy.intercept('POST', '**/statement/', (req) => {
-
-        if(req.body.verb.id === "http://adlnet.gov/expapi/verbs/completed"){
-
-            expect(req.body.verb).to.deep.equal(expectedVerb);
-            expect(req.body.result).to.deep.include(expectedResult);
-    
-            req.reply({
-                statusCode: 200,
-                body: { message: 'Progress statement received successfully' }            
-            });
-        }
-
-    }).as("completeStatement")
-
-});
-
-Cypress.Commands.add('answerCorrectQuestion', (answer, questionNumber) => {
-
-    const expectedProgressedVerb = {
-        id: "http://adlnet.gov/expapi/verbs/progressed",
-        display: {
-          "en": "progressed"
-        }
-    }; 
-
-    const expectedResult = {
-        response: answer,
-        success: true
-      };
-
-      const expectedObject = {
-        objectType: "Activity",
-        definition: {
-          type: "http://adlnet.gov/expapi/activities/cmi.interaction",
-          interactionType: "numeric",
-          correctResponsesPattern: [answer]
-        }
-      };
-
-    cy.interceptProgress(expectedProgressedVerb, expectedResult, expectedObject);
+      cy.interceptXapiStatement(
+        VERBS.ANSWERED.id,
+        `progressStatement-${questionNumber}`,
+        VERBS.ANSWERED,
+        expectedResult,
+        expectedObject
+      );
 
     cy.get(`#question-status > div`).contains(`Question: ${questionNumber} / 15`)
     cy.get(`.perseus-input`).type(answer)
     cy.get(`.checkanswer-btn`).click()
-    cy.contains('button', 'Next Question').click();
 
-    cy.wait('@progressStatement');
+    if(expectedResult.success){
+        cy.contains('button', 'Next Question').click();
+    }
+
+    cy.wait(`@progressStatement-${questionNumber}`).then(intercept => {
+        expect(intercept.response).to.exist;
+        expect(intercept.response.statusCode).to.eq(200);
+    })
 });
 
-afterEach(() => {
+Cypress.Commands.add('retryAnswer', (answer, questionNumber) => {
+
+    cy.get(`.perseus-input`).clear().type(answer);
+    cy.get(`.checkanswer-btn`).click();
+
+    // Assert that no xAPI statement is sent during retry
+    cy.wait(300); // Give some time for any unexpected requests to potentially be sent
+    cy.get(`@progressStatement-${questionNumber}.all`).should('have.length', 1) // Length should be 1 from the initial submission only
+
+    cy.contains('button', 'Next Question').click();
+
+});
+
+
+// cleans up after all tests complete
+after(() => {
     cy.task('cleanTempContent')
     .then(() => {
         console.log('Temporary content folder deleted successfully after the test.');
