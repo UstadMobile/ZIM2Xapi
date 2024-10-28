@@ -29,7 +29,7 @@ Cypress.Commands.add('convertZimFile', (zimFileName) => {
     const outputFolder = path.join('e2e', 'temp-content');
     const inputFile = path.join('e2e', 'content', `${zimFileName}.zim`);
 
-    const command = `java -jar ${jarPath} convert -zim-file ${inputFile} -output ${outputFolder}`;
+    const command = `java -jar ${jarPath} convert -zim-file ${inputFile} -keep-temp -output ${outputFolder}`;
     
     cy.exec(command)
     .its('code')
@@ -44,7 +44,7 @@ Cypress.Commands.add('getxapiobject', (zimFileName) => {
 
 
 Cypress.Commands.add('interceptXapiStatement', (verb, alias, expectedVerb, expectedResult = null, expectedObject = null, expectedContext = null) => {
-    cy.intercept('POST', '**/statement/', (req) => {
+    cy.intercept('POST', '**/statements/', (req) => {
       if (req.body.verb.id === verb) {
         req.alias = alias
         expect(req.body.verb).to.deep.equal(expectedVerb);

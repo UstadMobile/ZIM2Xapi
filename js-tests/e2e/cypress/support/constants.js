@@ -3,7 +3,7 @@ export const ACTOR = {
     mbox: "mailto:tincan@scorm.com"
   };
   
-  export const ENDPOINT = 'https://dummy-endpoint.com/lrs/statement/';
+  export const ENDPOINT = 'https://dummy-endpoint.com/lrs/';
   export const AUTH = 'dummyAuthToken';
   
   export const VERBS = {

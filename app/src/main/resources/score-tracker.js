@@ -362,8 +362,12 @@ async function sendQuestionXAPIStatement(questionObject, resultObject, context) 
 async function sendXAPIStatement(xAPIData) {
     try {
         console.log("sending xapi data")
-        
-        const response = await fetch(xapiConfig.endpoint, {
+        const endpointUrl = new URL(xapiConfig.endpoint);
+        // Remove any trailing slash from the path and add 'statements/' at the end
+        endpointUrl.pathname = endpointUrl.pathname.replace(/\/+$/, '') + '/statements/';
+
+        const endpoint = endpointUrl.toString();
+        const response = await fetch(endpoint, {
             method: "POST",
             headers: {
                 "X-Experience-API-Version": "1.0.3",

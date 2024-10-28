@@ -28,7 +28,7 @@ describe('Input Number Tests', () => {
             VERBS.ATTEMPTED.id,     
             'attemptedStatement',          
             VERBS.ATTEMPTED,          
-            null,                         
+            null,
             null,                        
             expectedContext    
           );
