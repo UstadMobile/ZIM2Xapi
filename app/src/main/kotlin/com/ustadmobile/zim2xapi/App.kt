@@ -107,6 +107,8 @@ class DownloadTopic : CliktCommand(name = "convert") {
             { "Passing grade must be between 0 and 100." }
         }
 
+    val keepTempFiles by option("-k","-keep-temp", help = "Keep temporary files").flag()
+
     override fun run() {
 
         val channelId = channelId
@@ -145,7 +147,7 @@ class DownloadTopic : CliktCommand(name = "convert") {
 
         val fileName = fileName ?: createdZimFile.nameWithoutExtension
 
-        // extract it to a folder,so we can easily zip it later
+        // extract it to a temp folder,so we can easily zip it later
         val extractedZimFolder = File(outputDir, fileName)
         extractedZimFolder.mkdirs()
 
@@ -168,7 +170,7 @@ class DownloadTopic : CliktCommand(name = "convert") {
             FixExtractZimExceptionsUseCase(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
 
             // create the xApi zip file
-            CreateXapiFileUseCase(zimDumpProcess, AddxAPIStatementUseCase(), json).invoke(
+            val xapiFile = CreateXapiFileUseCase(zimDumpProcess, AddxAPIStatementUseCase(), json).invoke(
                 extractedZimFolder,
                 outputDir,
                 fileName,
@@ -176,9 +178,18 @@ class DownloadTopic : CliktCommand(name = "convert") {
                 passingGrade
             )
 
+            echo("Process completed. Output filename: ${xapiFile.name}")
+            echo("File Location: ${xapiFile.absolutePath}")
+
         } catch (e: Exception) {
             echo(e.stackTrace, err = true)
             echo(e.message, err = true)
+        } finally {
+
+            if (!keepTempFiles) {
+                extractedZimFolder.deleteRecursively()
+            }
+
         }
 
     }

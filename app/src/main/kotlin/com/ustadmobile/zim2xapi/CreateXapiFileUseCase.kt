@@ -23,7 +23,7 @@ class CreateXapiFileUseCase(
         fileName: String,
         zimFile: File,
         passingGrade: Int
-    ) {
+    ): File {
 
         val indexHtml = File(zimFolder, INDEX_HTML)
         val doc = Jsoup.parse(indexHtml, "UTF-8")
@@ -84,6 +84,7 @@ class CreateXapiFileUseCase(
             }
         }
 
+        return xapiFile
     }
 
     companion object {
