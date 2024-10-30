@@ -362,9 +362,15 @@ async function sendQuestionXAPIStatement(questionObject, resultObject, context) 
 async function sendXAPIStatement(xAPIData) {
     try {
         console.log("sending xapi data")
+        // Build the endpoint URL
         const endpointUrl = new URL(xapiConfig.endpoint);
-        // Remove any trailing slash from the path and add 'statements/' at the end
-        endpointUrl.pathname = endpointUrl.pathname.replace(/\/+$/, '') + '/statements/';
+
+        // Ensure the URL path ends with '/statements':
+        // - We can't use URL("statements", endpointUrl) directly, as it would override the entire path,
+        //   not just add to it. Instead, we manually check and append 'statements'.
+        // - If the path already ends with '/', append 'statements' directly.
+        // - If not, add '/statements' to complete the path.
+        endpointUrl.pathname += endpointUrl.pathname.endsWith('/') ? 'statements' : '/statements';
 
         const endpoint = endpointUrl.toString();
         const response = await fetch(endpoint, {
