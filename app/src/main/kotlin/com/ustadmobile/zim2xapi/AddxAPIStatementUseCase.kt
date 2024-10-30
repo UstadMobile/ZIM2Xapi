@@ -3,6 +3,18 @@ package com.ustadmobile.zim2xapi
 import org.jsoup.Jsoup
 import java.io.File
 
+/**
+ * Adds necessary scripts to enable xAPI statement generation for Khan Academy Perseus exercises
+ * within a ZIM archive, as part of the zim2Xapi conversion process.
+ *
+ * This use case:
+ * - Checks for Perseus exercises within the provided ZIM folder and, if found, modifies the Perseus script
+ *   by adding two critical scripts, `score-tracker.js` and `khan-widgets.js`, to enable xAPI tracking.
+ * - Sets a `passingGrade` in `score-tracker.js`
+ *
+ * @param zimFolder The root folder containing ZIM content files.
+ * @param passingGrade The minimum grade to pass, applied to `score-tracker.js`.
+ */
 class AddxAPIStatementUseCase {
 
     operator fun invoke(
