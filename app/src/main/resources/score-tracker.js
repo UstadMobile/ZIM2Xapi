@@ -1,3 +1,7 @@
+// Import all exports from 'khan-widgets.js' as 'Widgets':
+// - 'khan-widgets.js' provides various interactive Khan Academy widgets used within Perseus exercises.
+// - These widgets support dynamic question elements (e.g., input boxes, sorter, dropdown) and are
+//   essential for enabling xAPI tracking in Khan Academy-style content.
 import * as Widgets from './khan-widgets.js';
 // Global Variables Initialization
 let xapiEnabled = false;
