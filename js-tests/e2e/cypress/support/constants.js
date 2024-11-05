@@ -20,4 +20,10 @@ export const ACTOR = {
       display: { "en": "answered" }
     }
 };
-  
+
+
+export const QuestionType = {
+  INPUT: 'input-number',
+  DRAG_AND_DROP: 'drag_and_drop',
+  RADIO: 'radio'
+};

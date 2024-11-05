@@ -1,4 +1,4 @@
-import { ACTOR, ENDPOINT, AUTH, VERBS } from '../support/constants';
+import { ACTOR, ENDPOINT, AUTH, VERBS, QuestionType } from '../support/constants';
 
 const zimFileName = "input-number";
 
@@ -100,7 +100,7 @@ describe('Input Number Tests', () => {
                 }
               };
             
-            cy.submitAnswer(question.answer, question.questionNumber, expectedObject, expectedResult);
+            cy.submitAnswer(QuestionType.INPUT, question.answer, question.questionNumber, questions.length, expectedObject, expectedResult);
           });
 
           cy.wait('@completeStatement');
@@ -200,10 +200,10 @@ describe('Input Number Tests', () => {
               };
 
           // Answer incorrectly first
-          cy.submitAnswer(question.incorrectAnswer, question.questionNumber, expectedObject, expectedResult);
+          cy.submitAnswer(QuestionType.INPUT, question.incorrectAnswer, question.questionNumber, questions.length, expectedObject, expectedResult);
     
           // Then answer correctly
-          cy.retryAnswer(question.answer, question.questionNumber);
+          cy.retryAnswer(QuestionType.INPUT, question.answer, question.questionNumber);
         });
         cy.get(`.green-alert-text`).contains("Exercise Complete!");
         cy.wait('@completeStatement');
