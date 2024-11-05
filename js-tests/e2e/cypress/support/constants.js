@@ -25,5 +25,6 @@ export const ACTOR = {
 export const QuestionType = {
   INPUT: 'input-number',
   DRAG_AND_DROP: 'drag_and_drop',
-  RADIO: 'radio'
+  RADIO: 'radio',
+  DROPDOWN: 'dropdown'
 };

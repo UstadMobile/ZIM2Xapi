@@ -15,13 +15,13 @@ describe('Radio Tests', () => {
         const queryParams = {
             endpoint: ENDPOINT,
             auth: AUTH,
-            registration: 'input-number-registration',
+            registration: 'radio-registration',
             actor: JSON.stringify(ACTOR)
         };
         const queryString = new URLSearchParams(queryParams).toString();
 
         const expectedContext = {
-            registration: "input-number-registration"
+            registration: "radio-registration"
         };
 
         cy.interceptXapiStatement(

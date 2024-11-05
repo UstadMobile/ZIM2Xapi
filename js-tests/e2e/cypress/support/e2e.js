@@ -97,7 +97,9 @@ Cypress.Commands.add('submitAnswer', (questionType, answer, questionNumber, numb
     case QuestionType.RADIO:
       cy.get('.perseus-radio-option').eq(answer).click();
       break;
-
+    case QuestionType.DROPDOWN:
+      cy.get('.perseus-widget-dropdown').select(answer);
+      break;
   }
 
   cy.get(`.checkanswer-btn`).click()
@@ -131,6 +133,9 @@ Cypress.Commands.add('retryAnswer', (questionType, answer, questionNumber) => {
       break;
     case QuestionType.RADIO:
       cy.get('.perseus-radio-option').eq(answer).click();
+      break;
+    case QuestionType.DROPDOWN:
+      cy.get('.perseus-widget-dropdown').select(answer);
       break;
   }
   cy.get(`.checkanswer-btn`).click();

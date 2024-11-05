@@ -1,6 +1,6 @@
 import { ACTOR, ENDPOINT, AUTH, VERBS, QuestionType } from '../support/constants';
 
-const zimFileName = "input-number";
+const zimFileName = "input_number";
 
 describe('Input Number Tests', () => {
 
