@@ -44,7 +44,7 @@ Cypress.Commands.add('getxapiobject', (zimFileName) => {
 
 
 Cypress.Commands.add('interceptXapiStatement', (verb, alias, expectedVerb, expectedResult = null, expectedObject = null, expectedContext = null) => {
-    cy.intercept('POST', '**/statements/', (req) => {
+    cy.intercept('POST', '**/statements', (req) => {
       if (req.body.verb.id === verb) {
         req.alias = alias
         expect(req.body.verb).to.deep.equal(expectedVerb);
