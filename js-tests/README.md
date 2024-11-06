@@ -26,12 +26,19 @@ Before running the tests, ensure that you have the following tools installed:
    This step ensures that all necessary files are generated and ready for testing. The JAR file will be located in jstests/build/libs.
 
 
-2. **Install Dependencies**
+3. **Install Dependencies**
    
    Use `npm` to install all necessary dependencies for both Cypress and Jest.
    ```bash
    cd js-tests
    npm install
+   ```
+
+4. **Optional: Update Test Zim Files**
+
+   This optional step is needed only when major code changes occur. Running this step will update all necessary .zim files for testing purposes.
+   ```bash
+      npm run update:zims
    ```
 
 ## Running Tests
