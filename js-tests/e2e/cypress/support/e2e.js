@@ -100,6 +100,28 @@ Cypress.Commands.add('submitAnswer', (questionType, answer, questionNumber, numb
     case QuestionType.DROPDOWN:
       cy.get('.perseus-widget-dropdown').select(answer);
       break;
+    case QuestionType.SORTER:
+      // Loop over each item in target order
+      answer.forEach(({ src, targetIndex }) => {
+        // Find the current index of the element based on its src
+        cy.get('.perseus-sortable-draggable img[src*="' + src + '"]')
+          .parents('.perseus-sortable-draggable')
+          .then($el => {
+            const currentIndex = $el.index(); // Get current index of the image
+  
+            if (currentIndex !== targetIndex) {
+              // If the image isn't already in the correct position, move it
+              cy.get('.perseus-sortable-draggable')
+                .eq(currentIndex)
+                .drag('.perseus-sortable-draggable', { index: targetIndex });
+            }
+          });
+      });
+      break;
+    case QuestionType.MATCHER:
+      // Loop over each item in target order
+      sortElementsToTargetPosition(answer);
+    break;
   }
 
   cy.get(`.checkanswer-btn`).click()
@@ -137,6 +159,26 @@ Cypress.Commands.add('retryAnswer', (questionType, answer, questionNumber) => {
     case QuestionType.DROPDOWN:
       cy.get('.perseus-widget-dropdown').select(answer);
       break;
+    case QuestionType.SORTER:
+      cy.get('.perseus-sortable-draggable').then((elements) => {
+        // Convert NodeList to an array and sort based on data-perseus-paragraph-index
+        const sortedElements = [...elements].sort((a, b) => {
+          return a.getAttribute('data-perseus-paragraph-index') - b.getAttribute('data-perseus-paragraph-index');
+        });
+  
+        // Drag each element to its sorted position
+        sortedElements.forEach((element, targetIndex) => {
+          const currentIndex = [...elements].indexOf(element);
+          if (currentIndex !== targetIndex) {
+            cy.get('.perseus-sortable-draggable').eq(currentIndex).drag('.perseus-sortable-draggable', { index: targetIndex });
+          }
+        });
+      });
+      break;
+    case QuestionType.MATCHER:
+      // Loop over each item in target order
+      sortElementsToTargetPosition(answer);
+    break;
   }
   cy.get(`.checkanswer-btn`).click();
 
@@ -156,3 +198,35 @@ after(() => {
       console.log('Temporary content folder deleted successfully after the test.');
     });
 });
+
+
+/**
+ * Recursively sorts elements in a draggable list to their target positions.
+ * It continually checks each element's position and adjusts if they are out of order, 
+ * handling randomized lists where elements might change positions dynamically.
+ */
+function sortElementsToTargetPosition(answer) {
+  let changesMade = false; // Track if any changes are made
+
+  answer.forEach(({ text, targetIndex }) => {
+    cy.contains('td:nth-child(2) .perseus-sortable-draggable', text)
+      .then($el => {
+        const currentIndex = $el.index();
+
+        if (currentIndex !== targetIndex) {
+          changesMade = true; // Mark that a change is needed
+          cy.get('td:nth-child(2) .perseus-sortable-draggable')
+            .eq(currentIndex)
+            .drag('td:nth-child(2) .perseus-sortable-draggable', { index: targetIndex });
+        }
+      });
+  });
+
+  // After each loop, recursively check if changes are still needed
+  cy.wait(500).then(() => {
+    if (changesMade) {
+      // Run the function again if there were any movements
+      sortElementsToTargetPosition(answer);
+    }
+  });
+}
