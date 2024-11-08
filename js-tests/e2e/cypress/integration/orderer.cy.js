@@ -2,7 +2,7 @@ import { ACTOR, ENDPOINT, AUTH, VERBS, QuestionType } from '../support/constants
 
 const zimFileName = "orderer";
 
-describe.skip('Orderer Tests', () => {
+describe('Orderer Tests', () => {
 
     before(() => {
         cy.convertZimFile(zimFileName);

@@ -199,8 +199,7 @@ function sortElementsToTargetPosition(elementToMove, answer) {
 
         if (currentIndex !== targetIndex) {
           changesMade = true; // Mark that a change is needed
-          cy.get(elementToMove)
-            .eq(currentIndex)
+          cy.contains(elementToMove,text)
             .drag(elementToMove, { index: targetIndex })
             .then(() => {
               // Log confirmation of the move
@@ -211,7 +210,7 @@ function sortElementsToTargetPosition(elementToMove, answer) {
   });
 
   // After each loop, recursively check if changes are still needed
-  cy.wait(500).then(() => {
+  cy.wait(250).then(() => {
     if (changesMade) {
       cy.log('Re-checking due to detected changes...');
       // Run the function again if there were any movements
