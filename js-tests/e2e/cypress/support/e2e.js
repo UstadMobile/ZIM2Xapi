@@ -101,26 +101,16 @@ Cypress.Commands.add('submitAnswer', (questionType, answer, questionNumber, numb
       cy.get('.perseus-widget-dropdown').select(answer);
       break;
     case QuestionType.SORTER:
-      // Loop over each item in target order
-      answer.forEach(({ src, targetIndex }) => {
-        // Find the current index of the element based on its src
-        cy.get('.perseus-sortable-draggable img[src*="' + src + '"]')
-          .parents('.perseus-sortable-draggable')
-          .then($el => {
-            const currentIndex = $el.index(); // Get current index of the image
-  
-            if (currentIndex !== targetIndex) {
-              // If the image isn't already in the correct position, move it
-              cy.get('.perseus-sortable-draggable')
-                .eq(currentIndex)
-                .drag('.perseus-sortable-draggable', { index: targetIndex });
-            }
-          });
-      });
+      sortElementsToTargetPosition('.perseus-sortable-draggable',answer);
       break;
     case QuestionType.MATCHER:
-      // Loop over each item in target order
-      sortElementsToTargetPosition(answer);
+          // Loop over each item in target order
+        sortElementsToTargetPosition('td:nth-child(2) .perseus-sortable-draggable',answer);
+      break;
+    case QuestionType.CATEGORIZER:
+      answer.forEach(({ text, targetIndex }) => {
+        selectCircle(text, targetIndex);
+      });
     break;
   }
 
@@ -128,7 +118,7 @@ Cypress.Commands.add('submitAnswer', (questionType, answer, questionNumber, numb
 
   if (expectedResult.success) {
     cy.contains('button', 'Next Question').click();
-  }
+  } 
 
   cy.wait(`@progressStatement-${questionNumber}`).then(intercept => {
     expect(intercept.response).to.exist;
@@ -160,24 +150,16 @@ Cypress.Commands.add('retryAnswer', (questionType, answer, questionNumber) => {
       cy.get('.perseus-widget-dropdown').select(answer);
       break;
     case QuestionType.SORTER:
-      cy.get('.perseus-sortable-draggable').then((elements) => {
-        // Convert NodeList to an array and sort based on data-perseus-paragraph-index
-        const sortedElements = [...elements].sort((a, b) => {
-          return a.getAttribute('data-perseus-paragraph-index') - b.getAttribute('data-perseus-paragraph-index');
-        });
-  
-        // Drag each element to its sorted position
-        sortedElements.forEach((element, targetIndex) => {
-          const currentIndex = [...elements].indexOf(element);
-          if (currentIndex !== targetIndex) {
-            cy.get('.perseus-sortable-draggable').eq(currentIndex).drag('.perseus-sortable-draggable', { index: targetIndex });
-          }
-        });
-      });
+      sortElementsToTargetPosition('.perseus-sortable-draggable',answer);
       break;
     case QuestionType.MATCHER:
       // Loop over each item in target order
-      sortElementsToTargetPosition(answer);
+      sortElementsToTargetPosition('td:nth-child(2) .perseus-sortable-draggable',answer);
+    break;
+    case QuestionType.CATEGORIZER:
+      answer.forEach(({ text, targetIndex }) => {
+        selectCircle(text, targetIndex);
+      });
     break;
   }
   cy.get(`.checkanswer-btn`).click();
@@ -205,19 +187,25 @@ after(() => {
  * It continually checks each element's position and adjusts if they are out of order, 
  * handling randomized lists where elements might change positions dynamically.
  */
-function sortElementsToTargetPosition(answer) {
+function sortElementsToTargetPosition(elementToMove, answer) {
   let changesMade = false; // Track if any changes are made
 
   answer.forEach(({ text, targetIndex }) => {
-    cy.contains('td:nth-child(2) .perseus-sortable-draggable', text)
+    cy.contains(elementToMove, text)
       .then($el => {
         const currentIndex = $el.index();
 
+        cy.log(`Checking element "${text}": Current Index = ${currentIndex}, Target Index = ${targetIndex}`);
+
         if (currentIndex !== targetIndex) {
           changesMade = true; // Mark that a change is needed
-          cy.get('td:nth-child(2) .perseus-sortable-draggable')
+          cy.get(elementToMove)
             .eq(currentIndex)
-            .drag('td:nth-child(2) .perseus-sortable-draggable', { index: targetIndex });
+            .drag(elementToMove, { index: targetIndex })
+            .then(() => {
+              // Log confirmation of the move
+              cy.log(`Moved "${text}" from index ${currentIndex} to ${targetIndex}`);
+            });
         }
       });
   });
@@ -225,8 +213,45 @@ function sortElementsToTargetPosition(answer) {
   // After each loop, recursively check if changes are still needed
   cy.wait(500).then(() => {
     if (changesMade) {
+      cy.log('Re-checking due to detected changes...');
       // Run the function again if there were any movements
-      sortElementsToTargetPosition(answer);
+      sortElementsToTargetPosition(elementToMove, answer);
+    }else {
+      cy.log('No changes needed, sorting complete.');
     }
   });
 }
+
+// categorizer selector
+const selectCircle = (text, targetIndex) => {
+  // Locate the row by text
+  cy.contains('td', text)
+    .parent() // Get the parent row of the located cell
+    .within(() => {
+      // Select the appropriate column by targetIndex (0 for first column, 1 for second column, etc.)
+      cy.get('td')
+        .eq(targetIndex + 1) // Adjust for the column index (skip the first column with text)
+        .find('.radioSpan_12gpsbj, .radioSpan_12gpsbj-o_O-checkedRadioSpan_9p8gsy') // Select the radio circle
+        .click(); // Click the circle
+    });
+};
+
+
+
+/*
+  for sorter when need to sort images
+   cy.get('.perseus-sortable-draggable img[src*="' + src + '"]')
+          .parents('.perseus-sortable-draggable')
+          .then($el => {
+            const currentIndex = $el.index(); // Get current index of the image
+  
+            if (currentIndex !== targetIndex) {
+              // If the image isn't already in the correct position, move it
+              cy.get('.perseus-sortable-draggable')
+                .eq(currentIndex)
+                .drag('.perseus-sortable-draggable', { index: targetIndex });
+            }
+          });
+      });
+
+      */

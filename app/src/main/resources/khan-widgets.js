@@ -755,6 +755,40 @@ export class Matcher extends Question {
      }
 }
 
+/*
+{
+    "categorizer 1": {
+        "alignment": "default",
+        "graded": true,
+        "options": {
+            "categories": [
+                "ETC",
+                "Chemiosmosis"
+            ],
+            "items": [
+                "Oxidizes NADH to NAD+",
+                "Creates a proton gradient",
+                "Makes ATP using a proton gradient",
+                "Oxidizes FADH2 to FAD"
+            ],
+            "randomizeItems": false,
+            "static": false,
+            "values": [
+                0,
+                0,
+                1,
+                0
+            ]
+        },
+        "static": false,
+        "type": "categorizer",
+        "version": {
+            "major": 0,
+            "minor": 0
+        }
+    }
+} 
+    */
 export class Categorizer extends Question {
 
      constructor(questionIndex, endpoint, questionContent, widgets) {
@@ -784,7 +818,7 @@ export class Categorizer extends Question {
           const values = widget.options.values
 
           const correctResponsesPattern = items.map((item, index) => {
-               return `source${index + 1}[.]target${values[index]}`;
+               return `source${index + 1}[.]target${values[index] + 1}`;
              }).join('[,]');
      
           this.object.definition.interactionType = "matching"

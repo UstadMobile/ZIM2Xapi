@@ -8,7 +8,7 @@
     "update:zims": "./update-zim.sh",
     "prestart-server": "mkdir -p e2e/temp-content",
     "start-server": "http-server e2e/temp-content -p 8081",
-    "test:e2e": "start-server-and-test start-server http://localhost:8081 cypress:open"
+    "test:e2e": "start-server-and-test start-server http://localhost:8081 cypress:run"
   },
   "description": "",
   "devDependencies": {

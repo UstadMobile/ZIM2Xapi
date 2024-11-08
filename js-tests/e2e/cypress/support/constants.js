@@ -28,5 +28,6 @@ export const QuestionType = {
   RADIO: 'radio',
   DROPDOWN: 'dropdown',
   SORTER: 'sorter',
-  MATCHER: 'matcher'
+  MATCHER: 'matcher',
+  CATEGORIZER: 'categorizer'
 };

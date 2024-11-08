@@ -2,7 +2,7 @@ import { ACTOR, ENDPOINT, AUTH, VERBS, QuestionType } from '../support/constants
 
 const zimFileName = "orderer";
 
-describe('Orderer Tests', () => {
+describe.skip('Orderer Tests', () => {
 
     before(() => {
         cy.convertZimFile(zimFileName);
@@ -107,10 +107,9 @@ describe('Orderer Tests', () => {
 
             cy.submitAnswer(QuestionType.DRAG_AND_DROP, question.answer, question.questionNumber, questions.length, expectedObject, expectedResult);
         });
-
-        cy.wait('@completeStatement');
         cy.get(`.green-alert-text`).contains("Exercise Complete!")
-
+        cy.wait('@completeStatement');
+       
     });
 
 

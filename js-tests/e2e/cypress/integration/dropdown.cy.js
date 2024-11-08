@@ -110,9 +110,8 @@ describe('Dropdown Tests', () => {
 
             cy.submitAnswer(QuestionType.DROPDOWN, question.answer, question.questionNumber, questions.length, expectedObject, expectedResult);
         });
-
-        cy.wait('@completeStatement');
         cy.get(`.green-alert-text`).contains("Exercise Complete!")
+        cy.wait('@completeStatement');
 
     });
 

@@ -33,7 +33,7 @@ const interactionTypeMapping = {
     "expression": { class: Widgets.Expression, category: GROUPABLE },
     "matcher": { class: Widgets.Matcher, category: INDIVIDUAL },
     "numeric-input": { class: Widgets.InputNumber, category: GROUPABLE },
-    "categorizer": { class: Widgets.Categorizer, category: GROUPABLE },
+    "categorizer": { class: Widgets.Categorizer, category: INDIVIDUAL },
     // "graded-group": { class: null, category: GROUP_WIDGET } // unable to find a course to test on
 };
 
