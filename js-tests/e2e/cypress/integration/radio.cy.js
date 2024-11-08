@@ -214,8 +214,8 @@ describe('Radio Tests', () => {
             // Then answer correctly
             cy.retryAnswer(QuestionType.RADIO, question.answer, question.questionNumber);
         });
-        cy.wait('@completeStatement');
         cy.get(`.green-alert-text`).contains("Exercise Complete!");
+        cy.wait('@completeStatement');
     });
 
 
