@@ -12,11 +12,6 @@ class FixExtractZimExceptionsUseCase(private val zimDumpProcess: ProcessBuilderU
 
         val exceptionsFolder = File(zimFolder, EXCEPTIONS_FOLDER_NAME)
 
-        if (!exceptionsFolder.exists()) {
-            // no errors found when extracting
-            return
-        }
-
         // get the mainpage of the zim and rename it to index.html
         val infoOutput = zimDumpProcess.invoke("info ${zimFile.absolutePath}")
         val mainPageLine = infoOutput.lines().find { it.trim().startsWith("main page:") }
@@ -37,6 +32,12 @@ class FixExtractZimExceptionsUseCase(private val zimDumpProcess: ProcessBuilderU
         if(!successRename){
             throw Exception("Failed to rename $mainPage to $INDEX_HTML")
         }
+
+        if (!exceptionsFolder.exists()) {
+            // no errors found when extracting
+            return
+        }
+
 
         // fix each file found in exceptions folder
         exceptionsFolder.walkTopDown().forEach { file ->

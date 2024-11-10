@@ -60,7 +60,7 @@ class KolibriTopics : EndpointCommand(name = "list-topics") {
         try {
             ListKolibriTopicsUseCase(client, json).invoke(id, endpoints)
         } catch (e: Exception) {
-            echo(e.stackTrace, err = true)
+            echo(e.printStackTrace(), err = true)
             echo(e.message, err = true)
         }
     }
@@ -136,7 +136,7 @@ class DownloadTopic : CliktCommand(name = "convert") {
                 )
 
             } catch (e: Exception) {
-                echo(e.stackTrace, err = true)
+                echo(e.printStackTrace(), err = true)
                 echo(e.message, err = true)
                 return
             }
@@ -182,7 +182,7 @@ class DownloadTopic : CliktCommand(name = "convert") {
             echo("File Location: ${xapiFile.absolutePath}")
 
         } catch (e: Exception) {
-            echo(e.stackTrace, err = true)
+            echo(e.printStackTrace(), err = true)
             echo(e.message, err = true)
         } finally {
 
