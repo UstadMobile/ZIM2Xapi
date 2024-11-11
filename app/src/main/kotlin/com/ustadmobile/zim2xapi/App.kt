@@ -169,6 +169,8 @@ class DownloadTopic : CliktCommand(name = "convert") {
             // fix any exceptions found in the folder
             FixExtractZimExceptionsUseCase(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
 
+            ShrinkXapiUseCase().invoke(extractedZimFolder)
+
             // create the xApi zip file
             val xapiFile = CreateXapiFileUseCase(zimDumpProcess, AddxAPIStatementUseCase(), json).invoke(
                 extractedZimFolder,
