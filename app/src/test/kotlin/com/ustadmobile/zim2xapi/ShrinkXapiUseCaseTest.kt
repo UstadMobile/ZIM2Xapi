@@ -1,5 +1,6 @@
 package com.ustadmobile.zim2xapi
 
+import com.ustadmobile.zim2xapi.utils.FileConstants
 import org.jsoup.nodes.Document
 import org.junit.After
 import org.junit.Assert.*
@@ -16,7 +17,7 @@ class ShrinkXapiUseCaseTest {
 
     private fun setupTestEnvironment(referencedAssets: List<String>) {
         // Create `index.html` file
-        val indexHtmlFile = File(zimFolder, ShrinkXapiUseCase.INDEX_FILE)
+        val indexHtmlFile = File(zimFolder, FileConstants.INDEX_HTML_FILE)
         val document = Document("")
         referencedAssets.forEach {
             document.body().appendElement("a").attr("href", "assets/$it")
@@ -24,7 +25,7 @@ class ShrinkXapiUseCaseTest {
         indexHtmlFile.writeText(document.outerHtml())
 
         // Create assets subfolders and files
-        val assetsFolder = File(zimFolder, ShrinkXapiUseCase.ASSETS_FOLDER)
+        val assetsFolder = File(zimFolder, FileConstants.ASSETS_FOLDER)
         assetsFolder.mkdirs()
         ShrinkXapiUseCase.SUBFOLDERS.forEach {
             File(assetsFolder, it).mkdir()
@@ -40,7 +41,7 @@ class ShrinkXapiUseCaseTest {
 
     @Test
     fun `should throw FileNotFoundException when assets folder does not exist`() {
-        val indexHtmlFile = File(zimFolder, ShrinkXapiUseCase.INDEX_FILE)
+        val indexHtmlFile = File(zimFolder, FileConstants.INDEX_HTML_FILE)
         indexHtmlFile.writeText("<html><body></body></html>")
 
         assertThrows(FileNotFoundException::class.java) {
@@ -57,7 +58,7 @@ class ShrinkXapiUseCaseTest {
         shrinkXapiUseCase.invoke(zimFolder)
 
         // Assert that referenced folders are still present
-        val assetsFolder = File(zimFolder, ShrinkXapiUseCase.ASSETS_FOLDER)
+        val assetsFolder = File(zimFolder, FileConstants.ASSETS_FOLDER)
         assertTrue(File(assetsFolder, "bootstrap").exists())
         assertTrue(File(assetsFolder, "pdfjs").exists())
 
@@ -76,7 +77,7 @@ class ShrinkXapiUseCaseTest {
         shrinkXapiUseCase.invoke(zimFolder)
 
         // Assert that all subfolders are still present
-        val assetsFolder = File(zimFolder, ShrinkXapiUseCase.ASSETS_FOLDER)
+        val assetsFolder = File(zimFolder, FileConstants.ASSETS_FOLDER)
         ShrinkXapiUseCase.SUBFOLDERS.forEach { subfolder ->
             assertTrue(File(assetsFolder, subfolder).exists())
         }

@@ -165,9 +165,10 @@ class DownloadTopic : CliktCommand(name = "convert") {
 
             // extract the zim
             ExtractZimUseCase(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
-
+            // make sure index.html exists
+            CreateIndexHtmlUseCase(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
             // fix any exceptions found in the folder
-            FixExtractZimExceptionsUseCase(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
+            FixExtractZimExceptionsUseCase().invoke(extractedZimFolder)
 
             ShrinkXapiUseCase().invoke(extractedZimFolder)
 

@@ -1,5 +1,7 @@
 package com.ustadmobile.zim2xapi
 
+import com.ustadmobile.zim2xapi.utils.FileConstants.INDEX_HTML_FILE
+import com.ustadmobile.zim2xapi.utils.FileConstants.ASSETS_FOLDER
 import org.jsoup.Jsoup
 import java.io.File
 import java.io.FileNotFoundException
@@ -11,7 +13,7 @@ class ShrinkXapiUseCase {
         zimFolder: File
     ) {
 
-        val indexHtml = File(zimFolder, INDEX_FILE)
+        val indexHtml = File(zimFolder, INDEX_HTML_FILE)
         if (!indexHtml.exists()) throw FileNotFoundException("index html not created")
         val assetsFolder = File(zimFolder, ASSETS_FOLDER)
         if (!assetsFolder.exists()) throw FileNotFoundException("assets html not found")
@@ -43,15 +45,12 @@ class ShrinkXapiUseCase {
 
     companion object {
 
-        const val INDEX_FILE = "index.html"
         const val VIDEOJS_FOLDER = "videojs"
         const val PERSEUS_FOLDER = "perseus"
         const val OGVJS_FOLDER = "ogvjs"
         const val PDFJS_FOLDER = "pdfjs"
         const val BOOTSTRAP_FOLDER = "bootstrap"
         const val BOOTSTRAP_ICONS_FOLDER = "bootstrap-icons"
-
-        const val ASSETS_FOLDER = "assets"
 
         val SUBFOLDERS = listOf(
             BOOTSTRAP_FOLDER, BOOTSTRAP_ICONS_FOLDER,
