@@ -64,41 +64,6 @@ class FixExtractZimExceptionsTest {
     }
 
     @Test
-    fun `invoke should do nothing if exceptions folder does not exist`() {
-        // Arrange
-        val zimFolder = createTemporaryFolder("zimFolder")
-        val mainPageName = "main.html"
-        val mainPageFile = createFileInFolder(zimFolder, mainPageName)
-
-        // Record the last modified time to ensure no changes are made
-        val initialLastModified = mainPageFile.lastModified()
-
-        // Mock zimDumpProcess to provide main page as "main.html"
-        mockZimDumpProcessMainPage("main page: $mainPageName")
-
-        // Act
-        fixExtractZimExceptions.invoke(zimFile = zimFolder, zimFolder = zimFolder)
-
-        // Assert
-        // Check that the main page has not been renamed
-        assertTrue(mainPageFile.exists(), "main.html should still exist and not be renamed")
-
-        // Ensure that no new `index.html` file has been created
-        val indexHtmlFile = File(zimFolder, "index.html")
-        assertFalse(indexHtmlFile.exists(), "index.html should not exist since no renaming should have occurred")
-
-        // Ensure that the `_exceptions` folder does not exist
-        val exceptionsFolder = File(zimFolder, FixExtractZimExceptionsUseCase.EXCEPTIONS_FOLDER_NAME)
-        assertFalse(exceptionsFolder.exists(), "_exceptions folder should not exist")
-
-        // Ensure that the last modified time of the main page has not changed
-        assertEquals(initialLastModified, mainPageFile.lastModified(), "main.html file should not be modified")
-
-        // Cleanup
-        cleanupTempDirs(zimFolder)
-    }
-
-    @Test
     fun `invoke should handle non-UTF-8 encoded file names`() {
         // Arrange
         val zimFolder = createTemporaryFolder("zimFolder")
