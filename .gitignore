@@ -16,4 +16,5 @@ node_modules
 js-tests/e2e/cypress/screenshots/
 js-tests/e2e/cypress/videos/
 js-tests/e2e/cypress/results/
+js-tests/e2e/temp-content/
 local.properties

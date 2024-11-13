@@ -23,6 +23,12 @@ const path = require('path');
 import { VERBS, QuestionType } from './constants';
 import '@4tw/cypress-drag-drop';
 
+before(() => {
+  cy.task('cleanTempContent').then(() => {
+    console.log('Temporary content folder cleaned before all tests.');
+  });
+});
+
 
 Cypress.Commands.add('convertZimFile', (zimFileName) => {
 
@@ -171,16 +177,6 @@ Cypress.Commands.add('retryAnswer', (questionType, answer, questionNumber) => {
   cy.contains('button', 'Next Question').click();
 
 });
-
-
-// cleans up after all tests complete
-after(() => {
-  cy.task('cleanTempContent')
-    .then(() => {
-      console.log('Temporary content folder deleted successfully after the test.');
-    });
-});
-
 
 /**
  * Recursively sorts elements in a draggable list to their target positions.
