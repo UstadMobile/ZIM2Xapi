@@ -7,7 +7,7 @@ module.exports = defineConfig({
   e2e: {
     specPattern: 'e2e/cypress/integration/**/*.cy.{js,jsx,ts,tsx}',
     supportFile: 'e2e/cypress/support/e2e.js',
-    baseUrl: 'http://localhost:8087',
+    baseUrl: 'http://localhost:8082',
     chromeWebSecurity: false,
     reporter: 'mocha-junit-reporter', //refer here for report options: https://www.npmjs.com/package/mocha-junit-reporter#full-configuration-options
             reporterOptions: {
