@@ -4,7 +4,7 @@
   "scripts": {
     "test": "jest",
     "cypress:open": "cypress open",
-    "cypress:run": "cypress run",
+    "cypress:run": "NO_COLOR=1 cypress run",
     "update:zims": "./update-zim.sh",
     "prestart-server": "mkdir -p e2e/temp-content",
     "start-server": "http-server e2e/temp-content -p 8082",
