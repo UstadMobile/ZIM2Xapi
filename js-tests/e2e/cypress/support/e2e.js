@@ -115,14 +115,16 @@ Cypress.Commands.add('submitAnswer', (questionType, answer, questionNumber, numb
 
   cy.get(`.checkanswer-btn`).click()
 
+  cy.wait(100)
+
   if (expectedResult.success) {
 
-    if((Number(questionNumber) + 1) > numberOfQuestions){
-         cy.get('.green-alert-text').as('exerciseComplete');
-         cy.get('@exerciseComplete', { timeout: 5000 }).should('exist');
-       }
-
     cy.contains('button', 'Next Question').click();
+
+    if((Number(questionNumber) + 1) > numberOfQuestions){
+      cy.get('.green-alert-text').as('exerciseComplete');
+      cy.get('@exerciseComplete', { timeout: 5000 }).should('exist');
+    }
   } 
 
   cy.wait(`@progressStatement-${questionNumber}`).then(intercept => {
@@ -170,15 +172,17 @@ Cypress.Commands.add('retryAnswer', (questionType, answer, questionNumber, numbe
 
   cy.get(`.checkanswer-btn`).click();
 
+  cy.wait(100)
+
   // Assert that no xAPI statement is sent during retry
   cy.get(`@progressStatement-${questionNumber}.all`).should('have.length', 1) // Length should be 1 from the initial submission only
 
-  if((Number(questionNumber) + 1) > numberOfQuestions){
-     cy.get('.green-alert-text').as('exerciseComplete');
-     cy.get('@exerciseComplete', { timeout: 5000 }).should('exist');
-   }
-
   cy.contains('button', 'Next Question').click();
+
+  if((Number(questionNumber) + 1) > numberOfQuestions){
+    cy.get('.green-alert-text').as('exerciseComplete');
+    cy.get('@exerciseComplete', { timeout: 5000 }).should('exist');
+  }
 
 });
 
