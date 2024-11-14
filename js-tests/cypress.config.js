@@ -22,22 +22,18 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
       // implement node event listeners here
 
-      on('task', {
-              cleanTempContent() {
-                  const tempFolderPath = path.join('e2e','temp-content');
-
-                  return fs.emptyDir(tempFolderPath)
-                      .then(() => {
-                          console.log('Temporary content folder deleted successfully.');
-                          return null;
-                      })
-                      .catch((err) => {
-                          console.error('Error deleting temporary content folder:', err);
-                          return null;
-                      });
-              }
-          });
-
+            on('before:run', () => {
+                   const tempFolderPath = path.join('e2e', 'temp-content');
+                   return fs.emptyDir(tempFolderPath)
+                     .then(() => {
+                       console.log('Temporary content folder cleaned before all tests.');
+                       return null;
+                     })
+                     .catch((err) => {
+                       console.error('Error cleaning temp content folder:', err);
+                       return null;
+                     });
+                 });
           return config;
 
     },

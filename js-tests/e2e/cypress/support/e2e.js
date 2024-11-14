@@ -23,13 +23,6 @@ const path = require('path');
 import { VERBS, QuestionType } from './constants';
 import '@4tw/cypress-drag-drop';
 
-before(() => {
-  cy.task('cleanTempContent').then(() => {
-    console.log('Temporary content folder cleaned before all tests.');
-  });
-});
-
-
 Cypress.Commands.add('convertZimFile', (zimFileName) => {
 
   const jarPath = path.join('build', 'libs', 'zim2xapi.jar');
