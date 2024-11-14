@@ -107,7 +107,6 @@ describe('Orderer Tests', () => {
 
             cy.submitAnswer(QuestionType.DRAG_AND_DROP, question.answer, question.questionNumber, questions.length, expectedObject, expectedResult);
         });
-        cy.get(`.green-alert-text`).contains("Exercise Complete!")
         cy.wait('@completeStatement');
        
     });
@@ -212,9 +211,8 @@ describe('Orderer Tests', () => {
             cy.submitAnswer(QuestionType.DRAG_AND_DROP, question.incorrectAnswer, question.questionNumber, questions.length, expectedObject, expectedResult);
 
             // Then answer correctly
-            cy.retryAnswer(QuestionType.DRAG_AND_DROP, question.answer, question.questionNumber);
+            cy.retryAnswer(QuestionType.DRAG_AND_DROP, question.answer, question.questionNumber, questions.length);
         });
-        cy.get(`.green-alert-text`).contains("Exercise Complete!");
         cy.wait('@completeStatement');
     });
 

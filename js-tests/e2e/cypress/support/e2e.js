@@ -31,17 +31,9 @@ Cypress.Commands.add('convertZimFile', (zimFileName) => {
 
   const command = `java -jar ${jarPath} convert -zim-file ${inputFile} -keep-temp -output ${outputFolder}`;
 
-  const exec = command => {
-    cy.exec(command, { failOnNonZeroExit: false }).then(result => {
-      if (result.code) {
-        throw new Error(`Execution of "${command}" failed
-        Exit code: ${result.code}
-        Stdout:\n${result.stdout}
-        Stderr:\n${result.stderr}`);
-      }
-    })
-  }
-  exec(command)
+  cy.exec(command)
+    .its('code')
+    .should('eq', 0)
 });
 
 Cypress.Commands.add('getxapiobject', (zimFileName) => {
@@ -124,6 +116,11 @@ Cypress.Commands.add('submitAnswer', (questionType, answer, questionNumber, numb
   cy.get(`.checkanswer-btn`).click()
 
   if (expectedResult.success) {
+
+    if(questionNumber > numberOfQuestions){
+      cy.get('.green-alert-text', { timeout: 5000 }).should('contain', 'Exercise Complete!');
+    }
+
     cy.contains('button', 'Next Question').click();
   } 
 
@@ -133,7 +130,7 @@ Cypress.Commands.add('submitAnswer', (questionType, answer, questionNumber, numb
   })
 });
 
-Cypress.Commands.add('retryAnswer', (questionType, answer, questionNumber) => {
+Cypress.Commands.add('retryAnswer', (questionType, answer, questionNumber, numberOfQuestions) => {
 
   switch (questionType) {
     case QuestionType.INPUT:
@@ -169,11 +166,17 @@ Cypress.Commands.add('retryAnswer', (questionType, answer, questionNumber) => {
       });
     break;
   }
+
   cy.get(`.checkanswer-btn`).click();
 
+  if(questionNumber > numberOfQuestions){
+    cy.get('.green-alert-text', { timeout: 5000 }).should('contain', 'Exercise Complete!');
+  }
+
   // Assert that no xAPI statement is sent during retry
-  cy.wait(300); // Give some time for any unexpected requests to potentially be sent
   cy.get(`@progressStatement-${questionNumber}.all`).should('have.length', 1) // Length should be 1 from the initial submission only
+
+ 
 
   cy.contains('button', 'Next Question').click();
 

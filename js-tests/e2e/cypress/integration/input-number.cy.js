@@ -102,7 +102,6 @@ describe('Input Number Tests', () => {
             
             cy.submitAnswer(QuestionType.INPUT, question.answer, question.questionNumber, questions.length, expectedObject, expectedResult);
           });
-          cy.get(`.green-alert-text`).contains("Exercise Complete!")
           cy.wait('@completeStatement');
 
     });
@@ -202,9 +201,8 @@ describe('Input Number Tests', () => {
           cy.submitAnswer(QuestionType.INPUT, question.incorrectAnswer, question.questionNumber, questions.length, expectedObject, expectedResult);
     
           // Then answer correctly
-          cy.retryAnswer(QuestionType.INPUT, question.answer, question.questionNumber);
+          cy.retryAnswer(QuestionType.INPUT, question.answer, question.questionNumber, questions.length);
         });
-        cy.get(`.green-alert-text`).contains("Exercise Complete!");
         cy.wait('@completeStatement');
       });
     

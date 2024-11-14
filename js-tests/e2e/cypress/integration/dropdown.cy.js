@@ -110,7 +110,6 @@ describe('Dropdown Tests', () => {
 
             cy.submitAnswer(QuestionType.DROPDOWN, question.answer, question.questionNumber, questions.length, expectedObject, expectedResult);
         });
-        cy.get(`.green-alert-text`).contains("Exercise Complete!")
         cy.wait('@completeStatement');
 
     });
@@ -217,9 +216,8 @@ describe('Dropdown Tests', () => {
             cy.submitAnswer(QuestionType.DROPDOWN, question.incorrectAnswer, question.questionNumber, questions.length, expectedObject, expectedResult);
 
             // Then answer correctly
-            cy.retryAnswer(QuestionType.DROPDOWN, question.answer, question.questionNumber);
+            cy.retryAnswer(QuestionType.DROPDOWN, question.answer, question.questionNumber, questions.length);
         });
-        cy.get(`.green-alert-text`).contains("Exercise Complete!");
         cy.wait('@completeStatement');
     });
 

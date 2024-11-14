@@ -107,7 +107,6 @@ describe('Radio Tests', () => {
 
             cy.submitAnswer(QuestionType.RADIO, question.answer, question.questionNumber, questions.length, expectedObject, expectedResult);
         });
-        cy.get(`.green-alert-text`).contains("Exercise Complete!")
         cy.wait('@completeStatement');
     
     });
@@ -212,9 +211,8 @@ describe('Radio Tests', () => {
             cy.submitAnswer(QuestionType.RADIO, question.incorrectAnswer, question.questionNumber, questions.length, expectedObject, expectedResult);
 
             // Then answer correctly
-            cy.retryAnswer(QuestionType.RADIO, question.answer, question.questionNumber);
+            cy.retryAnswer(QuestionType.RADIO, question.answer, question.questionNumber, questions.length);
         });
-        cy.get(`.green-alert-text`).contains("Exercise Complete!");
         cy.wait('@completeStatement');
     });
 

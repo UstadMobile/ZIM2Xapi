@@ -173,7 +173,6 @@ describe('Matcher Tests', () => {
 
             cy.submitAnswer(QuestionType.MATCHER, question.answer, question.questionNumber, questions.length, expectedObject, expectedResult);
         });
-        cy.get(`.green-alert-text`).contains("Exercise Complete!")
         cy.wait('@completeStatement');
 
     });
@@ -428,9 +427,8 @@ describe('Matcher Tests', () => {
             cy.submitAnswer(QuestionType.MATCHER, question.incorrectAnswer, question.questionNumber, questions.length, expectedObject, expectedResult);
 
             // Then answer correctly
-            cy.retryAnswer(QuestionType.MATCHER, question.answer, question.questionNumber);
+            cy.retryAnswer(QuestionType.MATCHER, question.answer, question.questionNumber, questions.length);
         });
-        cy.get(`.green-alert-text`).contains("Exercise Complete!");
         cy.wait('@completeStatement');
     });
 

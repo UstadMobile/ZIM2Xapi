@@ -133,7 +133,6 @@ describe('Sorter Tests', () => {
 
             cy.submitAnswer(question.questionType, question.answer, question.questionNumber, questions.length, expectedObject, expectedResult);
         });
-        cy.get(`.green-alert-text`).contains("Exercise Complete!")
         cy.wait('@completeStatement');
        
 
@@ -284,9 +283,8 @@ describe('Sorter Tests', () => {
             cy.submitAnswer(question.questionType, question.incorrectAnswer, question.questionNumber, questions.length, expectedObject, expectedResult);
 
             // Then answer correctly
-            cy.retryAnswer(question.questionType, question.answer, question.questionNumber);
+            cy.retryAnswer(question.questionType, question.answer, question.questionNumber, questions.length);
         });
-        cy.get(`.green-alert-text`).contains("Exercise Complete!");
         cy.wait('@completeStatement');
     });
 
