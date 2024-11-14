@@ -139,7 +139,7 @@ describe('Sorter Tests', () => {
     });
 
 
-    it.only('attempts to fail the multi-interaction exercise and verifies failing xAPI statements', () => {
+    it('attempts to fail the multi-interaction exercise and verifies failing xAPI statements', () => {
 
         const baseUrl = `${zimFileName}/index.html`;
 

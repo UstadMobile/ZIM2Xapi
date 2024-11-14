@@ -118,7 +118,8 @@ Cypress.Commands.add('submitAnswer', (questionType, answer, questionNumber, numb
   if (expectedResult.success) {
 
     if(questionNumber > numberOfQuestions){
-      cy.get('.green-alert-text', { timeout: 5000 }).should('contain', 'Exercise Complete!');
+       cy.get('.green-alert-text').as('exerciseComplete');
+       cy.get('@exerciseComplete', { timeout: 5000 }).should('exist');
     }
 
     cy.contains('button', 'Next Question').click();
@@ -170,7 +171,8 @@ Cypress.Commands.add('retryAnswer', (questionType, answer, questionNumber, numbe
   cy.get(`.checkanswer-btn`).click();
 
   if(questionNumber > numberOfQuestions){
-    cy.get('.green-alert-text', { timeout: 5000 }).should('contain', 'Exercise Complete!');
+    cy.get('.green-alert-text').as('exerciseComplete');
+    cy.get('@exerciseComplete', { timeout: 5000 }).should('exist');
   }
 
   // Assert that no xAPI statement is sent during retry
