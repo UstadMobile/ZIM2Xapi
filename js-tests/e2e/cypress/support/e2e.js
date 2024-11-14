@@ -34,10 +34,10 @@ Cypress.Commands.add('convertZimFile', (zimFileName) => {
    cy.exec(command, { failOnNonZeroExit: false })  // Prevent immediate failure
       .then((result) => {
         if (result.code !== 0) {
-          console.error('Command failed:', result.stderr || 'Unknown error');
+            cy.log(`Command failed: ${result.stderr || 'Unknown error'}`);
         }
-        expect(result.code).to.equal(0);  // This will fail the test and display the error
         console.log('Command output:', result.stdout);  // Log stdout for additional context
+        expect(result.code).to.equal(0);  // This will fail the test and display the error
       });
 });
 
