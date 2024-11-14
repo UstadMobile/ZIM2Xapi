@@ -31,14 +31,17 @@ Cypress.Commands.add('convertZimFile', (zimFileName) => {
 
   const command = `java -jar ${jarPath} convert -zim-file ${inputFile} -keep-temp -output ${outputFolder}`;
 
-   cy.exec(command, { failOnNonZeroExit: false })  // Prevent immediate failure
-      .then((result) => {
-        if (result.code !== 0) {
-            cy.log(`Command failed: ${result.stderr || 'Unknown error'}`);
-        }
-        console.log('Command output:', result.stdout);  // Log stdout for additional context
-        expect(result.code).to.equal(0);  // This will fail the test and display the error
-      });
+  const exec = command => {
+    cy.exec(command, { failOnNonZeroExit: false }).then(result => {
+      if (result.code) {
+        throw new Error(`Execution of "${command}" failed
+        Exit code: ${result.code}
+        Stdout:\n${result.stdout}
+        Stderr:\n${result.stderr}`);
+      }
+    })
+  }
+  exec(command)
 });
 
 Cypress.Commands.add('getxapiobject', (zimFileName) => {
