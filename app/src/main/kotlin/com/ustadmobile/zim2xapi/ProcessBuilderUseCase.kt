@@ -25,7 +25,11 @@ class ProcessBuilderUseCase(private val cmdPath: List<String>) {
         val exitCode =  process.waitFor()
 
         if (exitCode != 0) {
-            throw RuntimeException("Process failed with exit code $exitCode")
+            throw RuntimeException(
+                "Process failed with exit code $exitCode\n" +
+                        "for command ${commandList.joinToString(" ")}" +
+                        "Stdout:\n${outputBuilder}\n"
+            )
         }
 
         return outputBuilder.toString()

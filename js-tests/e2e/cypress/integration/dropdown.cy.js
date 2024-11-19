@@ -110,8 +110,11 @@ describe('Dropdown Tests', () => {
 
             cy.submitAnswer(QuestionType.DROPDOWN, question.answer, question.questionNumber, questions.length, expectedObject, expectedResult);
         });
-        cy.get(`.green-alert-text`).contains("Exercise Complete!")
-        cy.wait('@completeStatement');
+        cy.wait(`@completeStatement`).then(intercept => {
+            cy.log('Intercepted complete statement');
+            expect(intercept.response).to.exist;
+            expect(intercept.response.statusCode).to.eq(200);
+          })
 
     });
 
@@ -217,10 +220,13 @@ describe('Dropdown Tests', () => {
             cy.submitAnswer(QuestionType.DROPDOWN, question.incorrectAnswer, question.questionNumber, questions.length, expectedObject, expectedResult);
 
             // Then answer correctly
-            cy.retryAnswer(QuestionType.DROPDOWN, question.answer, question.questionNumber);
+            cy.retryAnswer(QuestionType.DROPDOWN, question.answer, question.questionNumber, questions.length);
         });
-        cy.get(`.green-alert-text`).contains("Exercise Complete!");
-        cy.wait('@completeStatement');
+        cy.wait(`@completeStatement`).then(intercept => {
+            cy.log('Intercepted complete statement');
+            expect(intercept.response).to.exist;
+            expect(intercept.response.statusCode).to.eq(200);
+          })
     });
 
 

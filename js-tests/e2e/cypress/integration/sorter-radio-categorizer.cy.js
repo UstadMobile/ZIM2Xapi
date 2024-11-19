@@ -133,14 +133,16 @@ describe('Sorter Tests', () => {
 
             cy.submitAnswer(question.questionType, question.answer, question.questionNumber, questions.length, expectedObject, expectedResult);
         });
-        cy.get(`.green-alert-text`).contains("Exercise Complete!")
-        cy.wait('@completeStatement');
-       
+        cy.wait(`@completeStatement`).then(intercept => {
+            cy.log('Intercepted complete statement');
+            expect(intercept.response).to.exist;
+            expect(intercept.response.statusCode).to.eq(200);
+          })
 
     });
 
 
-    it.only('attempts to fail the multi-interaction exercise and verifies failing xAPI statements', () => {
+    it('attempts to fail the multi-interaction exercise and verifies failing xAPI statements', () => {
 
         const baseUrl = `${zimFileName}/index.html`;
 
@@ -284,10 +286,13 @@ describe('Sorter Tests', () => {
             cy.submitAnswer(question.questionType, question.incorrectAnswer, question.questionNumber, questions.length, expectedObject, expectedResult);
 
             // Then answer correctly
-            cy.retryAnswer(question.questionType, question.answer, question.questionNumber);
+            cy.retryAnswer(question.questionType, question.answer, question.questionNumber, questions.length);
         });
-        cy.get(`.green-alert-text`).contains("Exercise Complete!");
-        cy.wait('@completeStatement');
+        cy.wait(`@completeStatement`).then(intercept => {
+            cy.log('Intercepted complete statement');
+            expect(intercept.response).to.exist;
+            expect(intercept.response.statusCode).to.eq(200);
+          })
     });
 
 

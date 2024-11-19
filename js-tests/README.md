@@ -56,7 +56,7 @@ Cypress is used for E2E tests to validate the UI workflows.
    ```
    
    This command will:
-   - Start a local server using `http-server` on port **8081**.
+   - Start a local server using `http-server` on port **8087**.
    - Run Cypress in headless mode(without UI)
 
 ### Running Unit Tests with Jest
@@ -74,7 +74,7 @@ This will run all tests defined in the project using the **Jest** framework.
 - **`npm run test`**: Runs **Jest** unit tests.
 - **`npm run cypress:open`**: Opens the Cypress test runner in interactive mode.
 - **`npm run cypress:run`**: Runs Cypress tests in headless mode.
-- **`npm run start-server`**: Starts a local server at `e2e/temp-content` on port **8081**.
+- **`npm run start-server`**: Starts a local server at `e2e/temp-content` on port **8087**.
 - **`npm run test:e2e`**: Starts the local server and runs Cypress for E2E testing.
 
 ## Notes

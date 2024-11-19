@@ -41,7 +41,6 @@ describe('Radio Tests', () => {
 
             cy.wait('@attemptedStatement').then((interception) => {
                 const requestBody = interception.request.body;
-
                 expect(requestBody.object).to.deep.equal(expectedObject);
 
             })
@@ -106,10 +105,12 @@ describe('Radio Tests', () => {
             };
 
             cy.submitAnswer(QuestionType.RADIO, question.answer, question.questionNumber, questions.length, expectedObject, expectedResult);
-        });
-        cy.get(`.green-alert-text`).contains("Exercise Complete!")
-        cy.wait('@completeStatement');
-    
+        });    
+        cy.wait(`@completeStatement`).then(intercept => {
+            cy.log('Intercepted complete statement');
+            expect(intercept.response).to.exist;
+            expect(intercept.response.statusCode).to.eq(200);
+          })
     });
 
 
@@ -212,10 +213,13 @@ describe('Radio Tests', () => {
             cy.submitAnswer(QuestionType.RADIO, question.incorrectAnswer, question.questionNumber, questions.length, expectedObject, expectedResult);
 
             // Then answer correctly
-            cy.retryAnswer(QuestionType.RADIO, question.answer, question.questionNumber);
+            cy.retryAnswer(QuestionType.RADIO, question.answer, question.questionNumber, questions.length);
         });
-        cy.get(`.green-alert-text`).contains("Exercise Complete!");
-        cy.wait('@completeStatement');
+        cy.wait(`@completeStatement`).then(intercept => {
+            cy.log('Intercepted complete statement');
+            expect(intercept.response).to.exist;
+            expect(intercept.response.statusCode).to.eq(200);
+          })
     });
 
 

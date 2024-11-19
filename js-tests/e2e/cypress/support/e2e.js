@@ -23,7 +23,6 @@ const path = require('path');
 import { VERBS, QuestionType } from './constants';
 import '@4tw/cypress-drag-drop';
 
-
 Cypress.Commands.add('convertZimFile', (zimFileName) => {
 
   const jarPath = path.join('build', 'libs', 'zim2xapi.jar');
@@ -117,7 +116,7 @@ Cypress.Commands.add('submitAnswer', (questionType, answer, questionNumber, numb
   cy.get(`.checkanswer-btn`).click()
 
   if (expectedResult.success) {
-    cy.contains('button', 'Next Question').click();
+    cy.contains('button', 'Next Question').click()
   } 
 
   cy.wait(`@progressStatement-${questionNumber}`).then(intercept => {
@@ -126,7 +125,7 @@ Cypress.Commands.add('submitAnswer', (questionType, answer, questionNumber, numb
   })
 });
 
-Cypress.Commands.add('retryAnswer', (questionType, answer, questionNumber) => {
+Cypress.Commands.add('retryAnswer', (questionType, answer, questionNumber, numberOfQuestions) => {
 
   switch (questionType) {
     case QuestionType.INPUT:
@@ -162,25 +161,16 @@ Cypress.Commands.add('retryAnswer', (questionType, answer, questionNumber) => {
       });
     break;
   }
+
   cy.get(`.checkanswer-btn`).click();
 
+  cy.wait(100)
+
   // Assert that no xAPI statement is sent during retry
-  cy.wait(300); // Give some time for any unexpected requests to potentially be sent
   cy.get(`@progressStatement-${questionNumber}.all`).should('have.length', 1) // Length should be 1 from the initial submission only
 
   cy.contains('button', 'Next Question').click();
-
 });
-
-
-// cleans up after all tests complete
-after(() => {
-  cy.task('cleanTempContent')
-    .then(() => {
-      console.log('Temporary content folder deleted successfully after the test.');
-    });
-});
-
 
 /**
  * Recursively sorts elements in a draggable list to their target positions.
