@@ -15,7 +15,7 @@ class ShrinkXapiUseCaseTest {
 
     val zimFolder: File = createTemporaryFolder("zimfolder")
 
-    private fun setupTestEnvironment(referencedAssets: List<String>) {
+    private fun setupTestEnvironment(referencedAssets: List<String>, referencedMapFiles: List<String> = listOf()) {
         // Create `index.html` file
         val indexHtmlFile = File(zimFolder, FileConstants.INDEX_HTML_FILE)
         val document = Document("")
@@ -30,6 +30,9 @@ class ShrinkXapiUseCaseTest {
         ShrinkXapiUseCase.SUBFOLDERS.forEach {
             File(assetsFolder, it).mkdir()
         }
+
+        val mapFile = File(zimFolder, INDEX_HTML_MAP_FILE)
+        mapFile.writeText("Mapping file")
     }
 
     @Test
@@ -67,6 +70,7 @@ class ShrinkXapiUseCaseTest {
         assertFalse(File(assetsFolder, "perseus").exists())
         assertFalse(File(assetsFolder, "ogvjs").exists())
         assertFalse(File(assetsFolder, "bootstrap-icons").exists())
+        assertFalse(File(zimFolder, INDEX_HTML_MAP_FILE).exists())
     }
 
     @Test
@@ -81,6 +85,7 @@ class ShrinkXapiUseCaseTest {
         ShrinkXapiUseCase.SUBFOLDERS.forEach { subfolder ->
             assertTrue(File(assetsFolder, subfolder).exists())
         }
+        assertFalse(File(zimFolder, INDEX_HTML_MAP_FILE).exists())
     }
 
     @After
@@ -90,6 +95,10 @@ class ShrinkXapiUseCaseTest {
 
     private fun createTemporaryFolder(name: String): File {
         return createTempDirectory(name).toFile()
+    }
+
+    companion object {
+        const val INDEX_HTML_MAP_FILE = "index.html.map"
     }
 
 }

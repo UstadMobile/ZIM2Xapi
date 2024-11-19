@@ -22,7 +22,6 @@ class ShrinkXapiUseCase {
 
         val referencedPaths =
             document.select("[href], [src]").map { it.attr("href") + it.attr("src") }.filter { it.isNotBlank() }
-
         SUBFOLDERS.forEach { subfolder ->
             val subfolderFile = File(assetsFolder, subfolder)
             val isReferenced = referencedPaths.any { it.contains(subfolder, ignoreCase = true) }
@@ -32,8 +31,17 @@ class ShrinkXapiUseCase {
                 deleteFolderIfExists(subfolderFile)
             }
         }
+
+        deleteMapFiles(zimFolder)
     }
 
+    private fun deleteMapFiles(folder: File) {
+        folder.walkTopDown().forEach {file ->
+            if (file.isFile && file.extension == ".map".trim('.')) {
+                file.delete()
+            }
+        }
+    }
     private fun deleteFolderIfExists(folder: File) {
         if (folder.exists() && folder.isDirectory) {
             val foldedDeleted = folder.deleteRecursively()
