@@ -107,7 +107,11 @@ describe('Orderer Tests', () => {
 
             cy.submitAnswer(QuestionType.DRAG_AND_DROP, question.answer, question.questionNumber, questions.length, expectedObject, expectedResult);
         });
-        cy.wait('@completeStatement');
+        cy.wait(`@completeStatement`).then(intercept => {
+            cy.log('Intercepted complete statement');
+            expect(intercept.response).to.exist;
+            expect(intercept.response.statusCode).to.eq(200);
+          })
        
     });
 
@@ -213,7 +217,11 @@ describe('Orderer Tests', () => {
             // Then answer correctly
             cy.retryAnswer(QuestionType.DRAG_AND_DROP, question.answer, question.questionNumber, questions.length);
         });
-        cy.wait('@completeStatement');
+        cy.wait(`@completeStatement`).then(intercept => {
+            cy.log('Intercepted complete statement');
+            expect(intercept.response).to.exist;
+            expect(intercept.response.statusCode).to.eq(200);
+          })
     });
 
 
