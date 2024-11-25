@@ -2,6 +2,7 @@ package com.ustadmobile.zim2xapi
 
 import com.ustadmobile.zim2xapi.models.ActivityDefinition
 import com.ustadmobile.zim2xapi.models.XapiObject
+import com.ustadmobile.zim2xapi.utils.FileConstants.INDEX_HTML_FILE
 import kotlinx.serialization.json.Json
 import org.jsoup.Jsoup
 import java.io.File
@@ -25,7 +26,7 @@ class CreateXapiFileUseCase(
         passingGrade: Int
     ): File {
 
-        val indexHtml = File(zimFolder, INDEX_HTML)
+        val indexHtml = File(zimFolder, INDEX_HTML_FILE)
         val doc = Jsoup.parse(indexHtml, "UTF-8")
         val title = doc.title()
         val description = doc.select("meta[name=description]").attr("content")
@@ -46,7 +47,7 @@ class CreateXapiFileUseCase(
                     <activity id="$activityId" type="$ACTIVITY_TYPE">
                         <name>$title</name>
                         <description lang="$lang">$description</description>
-                        <launch lang="$lang">$INDEX_HTML</launch>
+                        <launch lang="$lang">$INDEX_HTML_FILE</launch>
                     </activity>
                 </activities>
             </tincan>
@@ -90,7 +91,6 @@ class CreateXapiFileUseCase(
     companion object {
 
         const val TINCAN_XML = "tincan.xml"
-        const val INDEX_HTML = "index.html"
 
         const val ACTIVITY_TYPE = "http://adlnet.gov/expapi/activities/module"
 
