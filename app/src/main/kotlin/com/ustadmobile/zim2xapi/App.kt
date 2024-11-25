@@ -4,18 +4,19 @@
 package com.ustadmobile.zim2xapi
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.PrintMessage
 import com.github.ajalt.clikt.core.main
-import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.core.subcommands
-import com.github.ajalt.clikt.parameters.options.convert
-import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.required
+import com.github.ajalt.clikt.parameters.options.*
 import com.github.ajalt.clikt.parameters.types.file
+import com.github.ajalt.clikt.parameters.types.int
 import com.ustadmobile.zim2xapi.Client.client
 import com.ustadmobile.zim2xapi.Client.json
+import com.ustadmobile.zim2xapi.utils.SysPathUtil
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import java.io.File
+import java.io.FileNotFoundException
 
 object Client {
     // Create a single OkHttpClient instance
@@ -25,6 +26,7 @@ object Client {
 
     val json: Json by lazy {
         Json {
+            encodeDefaults = true
             ignoreUnknownKeys = true
         }
     }
@@ -60,8 +62,8 @@ class KolibriTopics : EndpointCommand(name = "list-topics") {
         try {
             ListKolibriTopicsUseCase(client, json).invoke(id, endpoints)
         } catch (e: Exception) {
-            echo(e.stackTrace, err = true)
-            echo(e.message, err = true)
+            echo(e.printStackTrace(), err = true)
+            throw PrintMessage("An error occurred: ${e.message}", statusCode = 1, true)
         }
     }
 
@@ -98,6 +100,17 @@ class DownloadTopic : CliktCommand(name = "convert") {
 
     val fileName by option("-name", help = "The name of the xApi file")
 
+    val passingGrade by option(
+        "-grade",
+        help = "The passing grade as a percentage (0-100). Default is 50%"
+    ).int().default(50)
+        .validate {
+            require(it in 0..100)
+            { "Passing grade must be between 0 and 100." }
+        }
+
+    val keepTempFiles by option("-k","-keep-temp", help = "Keep temporary files").flag()
+
     override fun run() {
 
         val channelId = channelId
@@ -124,51 +137,53 @@ class DownloadTopic : CliktCommand(name = "convert") {
                     fileName ?: topicId
                 )
 
-            }catch (e: Exception){
-                echo(e.stackTrace, err = true)
-                echo(e.message, err = true)
-                return
+            } catch (e: Exception) {
+                echo(e.printStackTrace(), err = true)
+                throw PrintMessage("An error occurred: ${e.message}", statusCode = 1, true)
             }
         } else {
-            echo("You must provide either a ZIM file or a Kolibri channel ID and topic.", err = true)
-            return
+            throw PrintMessage("You must provide either a ZIM file or a Kolibri channel ID and topic.", statusCode = 1, printError = true)
         }
 
         val fileName = fileName ?: createdZimFile.nameWithoutExtension
 
-        // extract it to a folder,so we can easily zip it later
+        // extract it to a temp folder,so we can easily zip it later
         val extractedZimFolder = File(outputDir, fileName)
         extractedZimFolder.mkdirs()
 
         try {
 
             val zimDump = SysPathUtil.findCommandInPath("zimdump", zimDumpPath)
-            if (zimDump == null) {
-                echo(
-                    "zimdump not found. Please install it from https://download.openzim.org/release/zim-tools/",
-                    err = true
-                )
-                return
-            }
+                ?: throw PrintMessage("zimdump not found. Please install it from https://download.openzim.org/release/zim-tools/", 1, true)
             val zimDumpProcess = ProcessBuilderUseCase(listOf(zimDump.absolutePath))
 
             // extract the zim
             ExtractZimUseCase(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
 
             // fix any exceptions found in the folder
-            FixExtractZimExceptions(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
+            FixExtractZimExceptionsUseCase(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
 
             // create the xApi zip file
-            CreateXapiFileUseCase(zimDumpProcess).invoke(
+            val xapiFile = CreateXapiFileUseCase(zimDumpProcess, AddxAPIStatementUseCase(), json).invoke(
                 extractedZimFolder,
                 outputDir,
                 fileName,
-                createdZimFile
+                createdZimFile,
+                passingGrade
             )
 
-        }catch (e: Exception){
-            echo(e.stackTrace, err = true)
-            echo(e.message, err = true)
+            echo("Process completed. Output filename: ${xapiFile.name}")
+            echo("File Location: ${xapiFile.absolutePath}")
+
+        } catch (e: Exception) {
+            echo(e.printStackTrace(), err = true)
+            throw PrintMessage("An error occurred: ${e.message}", statusCode = 1, true)
+        } finally {
+
+            if (!keepTempFiles) {
+                extractedZimFolder.deleteRecursively()
+            }
+
         }
 
     }

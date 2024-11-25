@@ -2,6 +2,7 @@ package com.ustadmobile.zim2xapi
 
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.serialization.json.Json
 import org.junit.Test
 import java.io.File
 import java.io.PrintWriter
@@ -12,7 +13,8 @@ import kotlin.test.assertTrue
 class CreateXapiFileUseCaseTest {
 
     private val zimDumpProcess = mockk<ProcessBuilderUseCase>(relaxed = true)
-    private val createXapiFileUseCase = CreateXapiFileUseCase(zimDumpProcess)
+    private val xapiStatement = AddxAPIStatementUseCase()
+    private val createXapiFileUseCase = CreateXapiFileUseCase(zimDumpProcess, xapiStatement, Json)
 
     @Test
     fun `invoke should create tincan xml and zip file`() {
@@ -26,7 +28,7 @@ class CreateXapiFileUseCaseTest {
         mockZimDumpProcess("uuid: 123e4567-e89b-12d3-a456-426614174000")
 
         val fileName = "outputFile"
-        createXapiFileUseCase.invoke(zimFolder, outputFolder, fileName, zimFile)
+        createXapiFileUseCase.invoke(zimFolder, outputFolder, fileName, zimFile, 50)
 
         val tinCanFile = File(zimFolder, "tincan.xml")
         assertTrue(tinCanFile.exists(), "tincan.xml file should be created")
@@ -56,7 +58,7 @@ class CreateXapiFileUseCaseTest {
 
         // Act & Assert
         val exception = assertFailsWith<Exception> {
-            createXapiFileUseCase.invoke(zimFolder, outputFolder, "outputFile", zimFile)
+            createXapiFileUseCase.invoke(zimFolder, outputFolder, "outputFile", zimFile, 50)
         }
         assertTrue(exception.message?.contains("index.html") == true, "Expected an exception regarding missing index.html")
 
@@ -83,7 +85,7 @@ class CreateXapiFileUseCaseTest {
 
         // Act & Assert
         val exception = assertFailsWith<Exception> {
-            createXapiFileUseCase.invoke(zimFolder, outputFolder, "outputFile", zimFile)
+            createXapiFileUseCase.invoke(zimFolder, outputFolder, "outputFile", zimFile, 50)
         }
         assertTrue(exception.message?.contains("uuid not provided by zimdump") == true)
 
