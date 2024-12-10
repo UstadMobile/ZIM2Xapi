@@ -15,6 +15,7 @@ import java.util.zip.ZipOutputStream
 class CreateXapiFileUseCase(
     private val zimDumpProcess: ProcessBuilderUseCase,
     private val addXApi: AddxAPIStatementUseCase,
+    private val createManifestFileUseCase: CreateManifestFileUseCase,
     private val json: Json
 ) {
 
@@ -70,6 +71,7 @@ class CreateXapiFileUseCase(
         )
 
         addXApi.invoke(zimFolder, passingGrade)
+        createManifestFileUseCase.invoke(zimFolder)
 
         val xapiFile = File(outputFolder, "$fileName.zip")
         ZipOutputStream(FileOutputStream(xapiFile)).use { zipOut ->

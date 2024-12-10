@@ -1,5 +1,6 @@
 package com.ustadmobile.zim2xapi
 
+import com.ustadmobile.zim2xapi.utils.FileConstants
 import org.jsoup.Jsoup
 import java.io.File
 
@@ -27,7 +28,7 @@ class AddxAPIStatementUseCase {
         // if doesn't exist, presume not a khan exercise
         if (!perseusFile.exists()) return
 
-        val indexFile = File(zimFolder, "index.html")
+        val indexFile = File(zimFolder, FileConstants.INDEX_HTML_FILE)
 
         val indexDoc = Jsoup.parse(indexFile)
         val scoreScript = indexDoc.createElement("script")
