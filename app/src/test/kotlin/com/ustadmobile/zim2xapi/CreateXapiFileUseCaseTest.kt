@@ -14,7 +14,8 @@ class CreateXapiFileUseCaseTest {
 
     private val zimDumpProcess = mockk<ProcessBuilderUseCase>(relaxed = true)
     private val xapiStatement = AddxAPIStatementUseCase()
-    private val createXapiFileUseCase = CreateXapiFileUseCase(zimDumpProcess, xapiStatement, Json)
+    private val createManifestFileUseCase = CreateManifestFileUseCase()
+    private val createXapiFileUseCase = CreateXapiFileUseCase(zimDumpProcess, xapiStatement, createManifestFileUseCase, Json)
 
     @Test
     fun `invoke should create tincan xml and zip file`() {

@@ -1,5 +1,6 @@
 package com.ustadmobile.zim2xapi
 
+import org.jsoup.Jsoup
 import org.junit.Before
 import org.junit.Test
 import java.io.File
@@ -28,7 +29,19 @@ class CreateManifestUseCaseTest {
 
         File(assetsFolder, "script.js").writeText("console.log('Hello World')")
         File(videoFolder, "style.css").writeText("body { color: red; }")
-        File(zimFolder, "index.html").writeText("<html></html>")
+
+        val indexHtmlFile = File(zimFolder, "index.html")
+        indexHtmlFile.writeText("""
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <title>My Web App</title>
+            </head>
+            <body>
+                <h1>Welcome to my Web App</h1>
+            </body>
+            </html>
+        """.trimIndent())
 
 
         val manifestFile = createManifestUseCase(zimFolder)
@@ -45,16 +58,13 @@ class CreateManifestUseCaseTest {
 
         assertTrue(actualLines.containsAll(expectedPaths))
 
+        val updatedDoc = Jsoup.parse(indexHtmlFile, "UTF-8")
+        val linkElement = updatedDoc.select("link[rel=manifest]").first()
+
+        assertTrue(linkElement != null, "Manifest link tag should exist")
+        assertTrue(linkElement.attr("href") == "manifest.txt", "Manifest link href should be manifest.txt")
+
     }
-
-
-
-
-
-
-
-
-
     private fun createTemporaryFolder(name: String): File {
         return createTempDirectory(name).toFile()
     }

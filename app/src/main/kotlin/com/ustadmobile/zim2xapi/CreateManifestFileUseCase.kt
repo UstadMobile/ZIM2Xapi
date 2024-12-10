@@ -27,6 +27,8 @@ class CreateManifestFileUseCase {
             val linkTag = indexDoc.createElement("link")
             linkTag.attr("rel", "manifest")
             linkTag.attr("href", MANIFEST_FILE)
+            indexDoc.head().appendChild(linkTag)
+            indexHtmlFile.writeText(indexDoc.html())
         }
 
 
