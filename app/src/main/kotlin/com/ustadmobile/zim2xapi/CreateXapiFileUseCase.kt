@@ -2,6 +2,11 @@ package com.ustadmobile.zim2xapi
 
 import com.ustadmobile.zim2xapi.models.ActivityDefinition
 import com.ustadmobile.zim2xapi.models.XapiObject
+import com.ustadmobile.zim2xapi.models.opdsfeed.OpdsFeed
+import com.ustadmobile.zim2xapi.models.opdsfeed.OpdsFeedMetadata
+import com.ustadmobile.zim2xapi.models.opdsfeed.OpdsPublication
+import com.ustadmobile.zim2xapi.models.opdsfeed.ReadiumLink
+import com.ustadmobile.zim2xapi.models.opdsfeed.ReadiumMetadata
 import kotlinx.serialization.json.Json
 import org.jsoup.Jsoup
 import java.io.File
@@ -64,6 +69,42 @@ class CreateXapiFileUseCase(
                         description = mapOf(lang to description),
                         type = ACTIVITY_TYPE
                     )
+                )
+            )
+        )
+
+        val opdsFeedJsonFile = File(zimFolder, "opdsfeed.json")
+        opdsFeedJsonFile.writeText(
+            json.encodeToString(
+                OpdsFeed.serializer(), OpdsFeed(
+                    metadata = OpdsFeedMetadata(
+                        title = title,
+                        description = description
+                    ),
+                    links = listOf(ReadiumLink(
+                        href = "",
+                        title = title
+                    )),
+                    publications = listOf(
+                        OpdsPublication(
+                            metadata = ReadiumMetadata(
+                                title = title,
+                                description = description
+                            ),
+                            links =listOf(ReadiumLink(
+                                href = "", //TODO Need to discuss this
+                                title = title
+                            )),
+                            images = listOf(ReadiumLink(
+                                href = "https://www.khanacademy.org/favicon.ico", //TODO Need to discuss this
+                                title = title
+                            ))
+                        )
+                    ),
+                    navigation = listOf(ReadiumLink(
+                        href = "", //TODO Need to discuss this
+                        title = title
+                    ))
                 )
             )
         )
