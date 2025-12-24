@@ -8,8 +8,4 @@ data class OpdsFeed(
     val links: List<ReadiumLink>,
     val publications: List<OpdsPublication>? = null,
     val navigation: List<ReadiumLink>? = null,
-) {
-    companion object {
-        const val MEDIA_TYPE = "application/opds+json"
-    }
-}
+)
