@@ -77,7 +77,6 @@ class CreateXapiFileUseCase(
         opdsFeedJsonFile.writeText(
             json.encodeToString(
                 OpdsFeed.serializer(), OpdsFeed(
-
                     metadata = OpdsFeedMetadata(
                         title = title,
                         description = description
