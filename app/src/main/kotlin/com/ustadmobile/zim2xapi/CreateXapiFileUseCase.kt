@@ -4,9 +4,12 @@ import com.ustadmobile.zim2xapi.models.ActivityDefinition
 import com.ustadmobile.zim2xapi.models.XapiObject
 import com.ustadmobile.zim2xapi.models.opdsfeed.OpdsFeed
 import com.ustadmobile.zim2xapi.models.opdsfeed.OpdsFeedMetadata
-import com.ustadmobile.zim2xapi.models.opdsfeed.OpdsPublication
+import com.ustadmobile.zim2xapi.models.opdsfeed.OpdsWebMetadata
 import com.ustadmobile.zim2xapi.models.opdsfeed.ReadiumLink
-import com.ustadmobile.zim2xapi.models.opdsfeed.ReadiumMetadata
+import com.ustadmobile.zim2xapi.models.opdsfeed.OpdsWebPublication
+import com.ustadmobile.zim2xapi.models.opdsfeed.OpdsWebPublicationLink
+
+
 import kotlinx.serialization.json.Json
 import org.jsoup.Jsoup
 import java.io.File
@@ -81,18 +84,21 @@ class CreateXapiFileUseCase(
                         title = title,
                         description = description
                     ),
-                    links = listOf(ReadiumLink(
-                        href = "",
-                        title = title
-                    )),
-                    navigation = listOf(ReadiumLink(
-                        href = "", //TODO Need to discuss this
-                        title = title
-                    ))
+                    links = listOf(
+                        ReadiumLink(
+                            href = "",
+                            title = title
+                        )
+                    ),
+                    navigation = listOf(
+                        ReadiumLink(
+                            href = "",
+                            title = title
+                        )
+                    )
                 )
             )
         )
-
         addXApi.invoke(zimFolder, passingGrade)
 
         val xapiFile = File(outputFolder, "$fileName.zip")
