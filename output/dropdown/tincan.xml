@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+           <tincan xmlns="http://projecttincan.com/tincan.xsd">
+                <activities>
+                    <activity id="https://ustadmobile.com/ns/zim2xapi/b1f12eb0-bfc2-432d-be99-0010d1e54dba" type="http://adlnet.gov/expapi/activities/module">
+                        <name>Compare 2-digit numbers</name>
+                        <description lang="en">Practice comparing numbers (within 100) using the symbols <, >, and =.</description>
+                        <launch lang="en">index.html</launch>
+                    </activity>
+                </activities>
+            </tincan>

@@ -85,22 +85,6 @@ class CreateXapiFileUseCase(
                         href = "",
                         title = title
                     )),
-                    publications = listOf(
-                        OpdsPublication(
-                            metadata = ReadiumMetadata(
-                                title = title,
-                                description = description
-                            ),
-                            links =listOf(ReadiumLink(
-                                href = "", //TODO Need to discuss this
-                                title = title
-                            )),
-                            images = listOf(ReadiumLink(
-                                href = "https://www.khanacademy.org/favicon.ico", //TODO Need to discuss this
-                                title = title
-                            ))
-                        )
-                    ),
                     navigation = listOf(ReadiumLink(
                         href = "", //TODO Need to discuss this
                         title = title
