@@ -76,7 +76,42 @@ class CreateXapiFileUseCase(
             )
         )
 
-        val opdsFeedJsonFile = File(zimFolder, "opdsfeed.json")
+        val opdsWebPublication = File(zimFolder, "publication.json")
+        opdsWebPublication.writeText(
+            json.encodeToString(
+                OpdsWebPublication.serializer(), OpdsWebPublication(
+                    context = "",
+                    metadata = OpdsWebMetadata(
+                        title = title,
+                        description = description,
+                        identifier = "",
+                    ),
+                    links = listOf(
+                        OpdsWebPublicationLink(
+                            rel = "self",
+                            href = "http://172.17.0.1/ka-dropdown/dropdown/index.html",
+                            type = "text/html"
+                        ),
+                        OpdsWebPublicationLink(
+                            rel = "http://opds-spec.org/acquisition/open-access",
+                            href = "http://172.17.0.1/ka-dropdown/dropdown/index.html",
+                            type = "text/html"
+                        )
+                    ),
+                    resources = listOf(
+                        OpdsWebPublicationLink(
+                            href = "http://172.17.0.1/ka-dropdown/dropdown/favicon.png",
+                            type = "image/png"
+                        ),
+                        OpdsWebPublicationLink(
+                            href = "http://172.17.0.1/ka-dropdown/dropdown/assets/epub-embed.css",
+                            type = "text/css"
+                        ),
+                    )
+                )
+            )
+        )
+        val opdsFeedJsonFile = File(zimFolder, "opds.json")
         opdsFeedJsonFile.writeText(
             json.encodeToString(
                 OpdsFeed.serializer(), OpdsFeed(
@@ -86,13 +121,13 @@ class CreateXapiFileUseCase(
                     ),
                     links = listOf(
                         ReadiumLink(
-                            href = "",
+                            href = "http://172.17.0.1/ka-dropdown/dropdown/opds.json",
                             title = title
                         )
                     ),
                     navigation = listOf(
                         ReadiumLink(
-                            href = "",
+                            href = "http://172.17.0.1/ka-dropdown/dropdown/publication.json",
                             title = title
                         )
                     )
