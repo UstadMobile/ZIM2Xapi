@@ -8,8 +8,7 @@ import com.ustadmobile.zim2xapi.models.opdsfeed.OpdsWebMetadata
 import com.ustadmobile.zim2xapi.models.opdsfeed.ReadiumLink
 import com.ustadmobile.zim2xapi.models.opdsfeed.OpdsWebPublication
 import com.ustadmobile.zim2xapi.models.opdsfeed.OpdsWebPublicationLink
-
-
+import java.net.URI
 import kotlinx.serialization.json.Json
 import org.jsoup.Jsoup
 import java.io.File
@@ -76,7 +75,11 @@ class CreateXapiFileUseCase(
             )
         )
 
-        val opdsWebPublication = File(zimFolder, "publication.json")
+        val path = zimFolder.absolutePath.toString()
+        val topic = path.split("/").last()
+        val assetResources = generateResourceLinks(zimFolder, topic)
+
+        val opdsWebPublication = File(zimFolder, PUBLICATION_JSON)
         opdsWebPublication.writeText(
             json.encodeToString(
                 OpdsWebPublication.serializer(), OpdsWebPublication(
@@ -84,34 +87,23 @@ class CreateXapiFileUseCase(
                     metadata = OpdsWebMetadata(
                         title = title,
                         description = description,
-                        identifier = "",
+                        identifier = "/$topic"
                     ),
                     links = listOf(
                         OpdsWebPublicationLink(
-                            rel = "self",
-                            href = "http://172.17.0.1/ka-dropdown/dropdown/index.html",
-                            type = "text/html"
+                            rel = SELF_LINK,
+                            href = "/$topic/$INDEX_HTML"
                         ),
                         OpdsWebPublicationLink(
-                            rel = "http://opds-spec.org/acquisition/open-access",
-                            href = "http://172.17.0.1/ka-dropdown/dropdown/index.html",
-                            type = "text/html"
+                            rel = ACQUISITION_LINK,
+                            href = "/$topic/$INDEX_HTML"
                         )
                     ),
-                    resources = listOf(
-                        OpdsWebPublicationLink(
-                            href = "http://172.17.0.1/ka-dropdown/dropdown/favicon.png",
-                            type = "image/png"
-                        ),
-                        OpdsWebPublicationLink(
-                            href = "http://172.17.0.1/ka-dropdown/dropdown/assets/epub-embed.css",
-                            type = "text/css"
-                        ),
-                    )
+                    resources = assetResources
                 )
             )
         )
-        val opdsFeedJsonFile = File(zimFolder, "opds.json")
+        val opdsFeedJsonFile = File(zimFolder, OPDS_JSON)
         opdsFeedJsonFile.writeText(
             json.encodeToString(
                 OpdsFeed.serializer(), OpdsFeed(
@@ -121,13 +113,13 @@ class CreateXapiFileUseCase(
                     ),
                     links = listOf(
                         ReadiumLink(
-                            href = "http://172.17.0.1/ka-dropdown/dropdown/opds.json",
-                            title = title
+                            href = "/$topic/$OPDS_JSON",
+                            title = title,
                         )
                     ),
                     navigation = listOf(
                         ReadiumLink(
-                            href = "http://172.17.0.1/ka-dropdown/dropdown/publication.json",
+                            href = "/$topic/$PUBLICATION_JSON",
                             title = title
                         )
                     )
@@ -153,10 +145,33 @@ class CreateXapiFileUseCase(
         return xapiFile
     }
 
+    private fun generateResourceLinks(zimFolder: File, topic: String): List<OpdsWebPublicationLink> {
+        val assetsFolder = File(zimFolder, ASSESTS)
+        if (!assetsFolder.exists() || !assetsFolder.isDirectory) return emptyList()
+
+        return assetsFolder.walk()
+            .filter { it.isFile }
+            .map { file ->
+                val relativePath = zimFolder.toPath().relativize(file.toPath()).toString()
+                OpdsWebPublicationLink(
+                    href = "/$topic/$relativePath",
+                )
+            }
+            .toList()
+    }
+
     companion object {
 
         const val TINCAN_XML = "tincan.xml"
         const val INDEX_HTML = "index.html"
+
+        const val OPDS_JSON = "opds.json"
+        const val PUBLICATION_JSON = "publication.json"
+
+        const val ASSESTS = "assets"
+
+        const val SELF_LINK= "self"
+        const val ACQUISITION_LINK= "http://opds-spec.org/acquisition/open-access"
 
         const val ACTIVITY_TYPE = "http://adlnet.gov/expapi/activities/module"
 
