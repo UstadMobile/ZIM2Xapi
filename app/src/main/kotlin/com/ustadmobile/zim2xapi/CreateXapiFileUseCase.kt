@@ -127,6 +127,7 @@ class CreateXapiFileUseCase(
                 )
             )
         )
+
         addXApi.invoke(zimFolder, passingGrade)
 
         val xapiFile = File(outputFolder, "$fileName.zip")
