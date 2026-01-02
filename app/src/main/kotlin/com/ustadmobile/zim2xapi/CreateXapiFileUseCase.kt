@@ -103,6 +103,7 @@ class CreateXapiFileUseCase(
                 )
             )
         )
+
         val opdsFeedJsonFile = File(zimFolder, OPDS_JSON)
         opdsFeedJsonFile.writeText(
             json.encodeToString(
@@ -126,6 +127,7 @@ class CreateXapiFileUseCase(
                 )
             )
         )
+
         addXApi.invoke(zimFolder, passingGrade)
 
         val xapiFile = File(outputFolder, "$fileName.zip")
@@ -145,7 +147,10 @@ class CreateXapiFileUseCase(
         return xapiFile
     }
 
-    private fun generateResourceLinks(zimFolder: File, topic: String): List<OpdsWebPublicationLink> {
+    private fun generateResourceLinks(
+        zimFolder: File,
+        topic: String
+    ): List<OpdsWebPublicationLink> {
         val assetsFolder = File(zimFolder, ASSESTS)
         if (!assetsFolder.exists() || !assetsFolder.isDirectory) return emptyList()
 
@@ -170,8 +175,8 @@ class CreateXapiFileUseCase(
 
         const val ASSESTS = "assets"
 
-        const val SELF_LINK= "self"
-        const val ACQUISITION_LINK= "http://opds-spec.org/acquisition/open-access"
+        const val SELF_LINK = "self"
+        const val ACQUISITION_LINK = "http://opds-spec.org/acquisition/open-access"
 
         const val ACTIVITY_TYPE = "http://adlnet.gov/expapi/activities/module"
 
