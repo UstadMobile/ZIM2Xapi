@@ -87,16 +87,16 @@ class CreateXapiFileUseCase(
                     metadata = OpdsWebMetadata(
                         title = title,
                         description = description,
-                        identifier = "/$topic"
+                        identifier = topic
                     ),
                     links = listOf(
                         OpdsWebPublicationLink(
                             rel = SELF_LINK,
-                            href = "/$topic/$INDEX_HTML"
+                            href = "$topic/$INDEX_HTML"
                         ),
                         OpdsWebPublicationLink(
                             rel = ACQUISITION_LINK,
-                            href = "/$topic/$INDEX_HTML"
+                            href = "$topic/$INDEX_HTML"
                         )
                     ),
                     resources = assetResources
@@ -114,13 +114,13 @@ class CreateXapiFileUseCase(
                     ),
                     links = listOf(
                         ReadiumLink(
-                            href = "/$topic/$OPDS_JSON",
+                            href = "$topic/$OPDS_JSON",
                             title = title,
                         )
                     ),
                     navigation = listOf(
                         ReadiumLink(
-                            href = "/$topic/$PUBLICATION_JSON",
+                            href = "$topic/$PUBLICATION_JSON",
                             title = title
                         )
                     )
@@ -158,7 +158,7 @@ class CreateXapiFileUseCase(
             .map { file ->
                 val relativePath = zimFolder.toPath().relativize(file.toPath()).toString()
                 OpdsWebPublicationLink(
-                    href = "/$topic/$relativePath",
+                    href = "$topic/$relativePath",
                 )
             }
             .toList()
