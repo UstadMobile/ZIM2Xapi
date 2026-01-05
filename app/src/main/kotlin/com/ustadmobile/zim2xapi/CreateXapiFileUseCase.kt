@@ -61,7 +61,7 @@ class CreateXapiFileUseCase(
             )
         }
 
-        val xapiObjectJsonFile = File(zimFolder, "xapiobject.json")
+        val xapiObjectJsonFile = File(zimFolder, XAPI_OBJECT_JSON)
         xapiObjectJsonFile.writeText(
             json.encodeToString(
                 XapiObject.serializer(), XapiObject(
@@ -169,6 +169,7 @@ class CreateXapiFileUseCase(
         const val TINCAN_XML = "tincan.xml"
         const val INDEX_HTML = "index.html"
 
+        const val XAPI_OBJECT_JSON ="xapiobject.json"
         const val OPDS_JSON = "opds.json"
         const val PUBLICATION_JSON = "publication.json"
 
