@@ -8,7 +8,6 @@ import com.ustadmobile.zim2xapi.models.opdsfeed.OpdsWebMetadata
 import com.ustadmobile.zim2xapi.models.opdsfeed.ReadiumLink
 import com.ustadmobile.zim2xapi.models.opdsfeed.OpdsWebPublication
 import com.ustadmobile.zim2xapi.models.opdsfeed.OpdsWebPublicationLink
-import java.net.URI
 import kotlinx.serialization.json.Json
 import org.jsoup.Jsoup
 import java.io.File
