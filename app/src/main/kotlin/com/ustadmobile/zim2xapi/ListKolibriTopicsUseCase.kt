@@ -19,6 +19,22 @@ class ListKolibriTopicsUseCase(
         displayTopicInfo(topic)
     }
 
+    operator fun invoke(
+        channelId: String,
+        topicId: String,
+        endpoints: List<String>
+    ): List<Topic> {
+        val rootTopic = fetchTopic(topicId, endpoints)
+
+        val allTopics = mutableListOf<Topic>()
+
+        rootTopic.children?.results?.forEach { child ->
+            flattenTopics(child, allTopics)
+        }
+
+        return allTopics
+    }
+
     private fun displayTopicInfo(topic: Topic, depth: Int = 0) {
         val indent = "  ".repeat(depth)
         println("$indent- ${topic.title} (ID: ${topic.id}, Kind: ${topic.kind}, Leaf: ${topic.is_leaf})")
@@ -27,7 +43,12 @@ class ListKolibriTopicsUseCase(
             displayTopicInfo(child, depth + 1)
         }
     }
-
+    private fun flattenTopics(topic: Topic, list: MutableList<Topic>) {
+        list.add(topic)
+        topic.children?.results?.forEach { child ->
+            flattenTopics(child, list)
+        }
+    }
     private fun fetchTopic(id: String, endpoints: List<String>): Topic {
         // expecting one url to throw a 404 or an error
         endpoints.forEach {base ->

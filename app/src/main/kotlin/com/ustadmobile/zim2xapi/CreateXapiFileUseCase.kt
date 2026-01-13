@@ -1,6 +1,7 @@
 package com.ustadmobile.zim2xapi
 
 import com.ustadmobile.zim2xapi.models.ActivityDefinition
+import com.ustadmobile.zim2xapi.models.Topic
 import com.ustadmobile.zim2xapi.models.XapiObject
 import com.ustadmobile.zim2xapi.models.opdsfeed.OpdsFeed
 import com.ustadmobile.zim2xapi.models.opdsfeed.OpdsFeedMetadata
@@ -28,7 +29,8 @@ class CreateXapiFileUseCase(
         outputFolder: File,
         fileName: String,
         zimFile: File,
-        passingGrade: Int
+        passingGrade: Int,
+        allTopics: List<Topic>
     ): File {
 
         val indexHtml = File(zimFolder, INDEX_HTML)
@@ -78,6 +80,31 @@ class CreateXapiFileUseCase(
         val topic = path.split("/").last()
         val assetResources = generateResourceLinks(zimFolder, topic)
 
+        val opdsFeedJsonFile = File(zimFolder, OPDS_JSON)
+        val navigationLinks = allTopics.map { subTopic ->
+            ReadiumLink(
+                href = "$topic/${subTopic.id}",
+                title = subTopic.title
+            )
+        }
+        opdsFeedJsonFile.writeText(
+            json.encodeToString(
+                OpdsFeed.serializer(), OpdsFeed(
+                    metadata = OpdsFeedMetadata(
+                        title = title,
+                        description = description
+                    ),
+                    links = listOf(
+                        ReadiumLink(
+                            href = "$topic/$INDEX_HTML",
+                            title = title,
+                        )
+                    ),
+                    navigation = navigationLinks
+                )
+            )
+        )
+
         val opdsWebPublication = File(zimFolder, PUBLICATION_JSON)
         opdsWebPublication.writeText(
             json.encodeToString(
@@ -103,29 +130,7 @@ class CreateXapiFileUseCase(
             )
         )
 
-        val opdsFeedJsonFile = File(zimFolder, OPDS_JSON)
-        opdsFeedJsonFile.writeText(
-            json.encodeToString(
-                OpdsFeed.serializer(), OpdsFeed(
-                    metadata = OpdsFeedMetadata(
-                        title = title,
-                        description = description
-                    ),
-                    links = listOf(
-                        ReadiumLink(
-                            href = "$topic/$OPDS_JSON",
-                            title = title,
-                        )
-                    ),
-                    navigation = listOf(
-                        ReadiumLink(
-                            href = "$topic/$PUBLICATION_JSON",
-                            title = title
-                        )
-                    )
-                )
-            )
-        )
+
         addXApi.invoke(zimFolder, passingGrade)
 
         val xapiFile = File(outputFolder, "$fileName.zip")
@@ -168,7 +173,7 @@ class CreateXapiFileUseCase(
         const val TINCAN_XML = "tincan.xml"
         const val INDEX_HTML = "index.html"
 
-        const val XAPI_OBJECT_JSON ="xapiobject.json"
+        const val XAPI_OBJECT_JSON = "xapiobject.json"
         const val OPDS_JSON = "opds.json"
         const val PUBLICATION_JSON = "publication.json"
 
