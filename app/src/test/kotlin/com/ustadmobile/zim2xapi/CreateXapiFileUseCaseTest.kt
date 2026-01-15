@@ -28,7 +28,9 @@ class CreateXapiFileUseCaseTest {
         mockZimDumpProcess("uuid: 123e4567-e89b-12d3-a456-426614174000")
 
         val fileName = "outputFile"
-        createXapiFileUseCase.invoke(zimFolder, outputFolder, fileName, zimFile, 50)
+        createXapiFileUseCase.invoke(
+            zimFolder, outputFolder, fileName, zimFile, 50, topics = emptyList()
+        )
 
         val tinCanFile = File(zimFolder, "tincan.xml")
         assertTrue(tinCanFile.exists(), "tincan.xml file should be created")
@@ -58,7 +60,9 @@ class CreateXapiFileUseCaseTest {
 
         // Act & Assert
         val exception = assertFailsWith<Exception> {
-            createXapiFileUseCase.invoke(zimFolder, outputFolder, "outputFile", zimFile, 50)
+            createXapiFileUseCase.invoke(
+                zimFolder, outputFolder, "outputFile", zimFile, 50, topics = emptyList(),
+            )
         }
         assertTrue(exception.message?.contains("index.html") == true, "Expected an exception regarding missing index.html")
 
@@ -85,7 +89,7 @@ class CreateXapiFileUseCaseTest {
 
         // Act & Assert
         val exception = assertFailsWith<Exception> {
-            createXapiFileUseCase.invoke(zimFolder, outputFolder, "outputFile", zimFile, 50)
+            createXapiFileUseCase.invoke(zimFolder, outputFolder, "outputFile", zimFile, 50, topics = emptyList())
         }
         assertTrue(exception.message?.contains("uuid not provided by zimdump") == true)
 

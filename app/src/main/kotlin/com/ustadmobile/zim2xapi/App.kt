@@ -12,11 +12,11 @@ import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.int
 import com.ustadmobile.zim2xapi.Client.client
 import com.ustadmobile.zim2xapi.Client.json
+import com.ustadmobile.zim2xapi.models.Topic
 import com.ustadmobile.zim2xapi.utils.SysPathUtil
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import java.io.File
-import java.io.FileNotFoundException
 
 object Client {
     // Create a single OkHttpClient instance
@@ -111,11 +111,21 @@ class DownloadTopic : CliktCommand(name = "convert") {
 
     val keepTempFiles by option("-k","-keep-temp", help = "Keep temporary files").flag()
 
+    val endpoints by option("--endpoint", "-e")
+        .convert { it.split(",") }
+        .default(
+            listOf(
+                "https://kolibri-demo.learningequality.org",
+                "https://kolibri-catalog-en.learningequality.org"
+            )
+        )
+
     override fun run() {
 
         val channelId = channelId
         val topicId = topicId
         val zimFile = zimFile
+        var topics: List<Topic> = emptyList()
 
         val createdZimFile: File = zimFile ?: if (channelId != null && topicId != null) {
 
@@ -129,6 +139,8 @@ class DownloadTopic : CliktCommand(name = "convert") {
                 val kolibri2zimPath = FindKolibri2ZimUseCase().invoke(kolibiri2zimPath, dockerPath, outputDir)
 
                 val kolbir2zimProcess = ProcessBuilderUseCase(kolibri2zimPath)
+
+                topics =  ListKolibriTopicsUseCase(client, json).invoke(channelId, topicId, endpoints)
 
                 DownloadKolibriZimUseCase(kolbir2zimProcess).invoke(
                     channelId,
@@ -163,13 +175,15 @@ class DownloadTopic : CliktCommand(name = "convert") {
             // fix any exceptions found in the folder
             FixExtractZimExceptionsUseCase(zimDumpProcess).invoke(createdZimFile, extractedZimFolder)
 
+
             // create the xApi zip file
             val xapiFile = CreateXapiFileUseCase(zimDumpProcess, AddxAPIStatementUseCase(), json).invoke(
                 extractedZimFolder,
                 outputDir,
                 fileName,
                 createdZimFile,
-                passingGrade
+                passingGrade,
+                topics
             )
 
             echo("Process completed. Output filename: ${xapiFile.name}")
