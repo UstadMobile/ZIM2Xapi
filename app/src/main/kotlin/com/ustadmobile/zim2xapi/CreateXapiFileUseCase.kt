@@ -31,7 +31,7 @@ class CreateXapiFileUseCase(
         fileName: String,
         zimFile: File,
         passingGrade: Int,
-        allTopics: List<Topic>
+        topics: List<Topic>
     ): File {
 
         val indexHtml = File(zimFolder, INDEX_HTML)
@@ -105,7 +105,7 @@ class CreateXapiFileUseCase(
             )
         )
 
-        val publicationLinks = allTopics.map { subTopic ->
+        val publicationLinks = topics.map { subTopic ->
             OpdsWebPublication(
                 links = listOf(
                     OpdsWebPublicationLink(
@@ -141,7 +141,7 @@ class CreateXapiFileUseCase(
             )
         )
 
-        allTopics.forEach { subTopic ->
+        topics.forEach { subTopic ->
             val subTopicJsonFile = File(zimFolder, "${subTopic.id}.json")
             subTopicJsonFile.writeText(
                 json.encodeToString(

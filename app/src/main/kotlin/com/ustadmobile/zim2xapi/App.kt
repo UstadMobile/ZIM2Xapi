@@ -125,7 +125,7 @@ class DownloadTopic : CliktCommand(name = "convert") {
         val channelId = channelId
         val topicId = topicId
         val zimFile = zimFile
-        var allTopics: List<Topic> = emptyList()
+        var topics: List<Topic> = emptyList()
 
         val createdZimFile: File = zimFile ?: if (channelId != null && topicId != null) {
 
@@ -140,7 +140,7 @@ class DownloadTopic : CliktCommand(name = "convert") {
 
                 val kolbir2zimProcess = ProcessBuilderUseCase(kolibri2zimPath)
 
-                allTopics =  ListKolibriTopicsUseCase(client, json).invoke(channelId, topicId, endpoints)
+                topics =  ListKolibriTopicsUseCase(client, json).invoke(channelId, topicId, endpoints)
 
                 DownloadKolibriZimUseCase(kolbir2zimProcess).invoke(
                     channelId,
@@ -183,7 +183,7 @@ class DownloadTopic : CliktCommand(name = "convert") {
                 fileName,
                 createdZimFile,
                 passingGrade,
-                allTopics
+                topics
             )
 
             echo("Process completed. Output filename: ${xapiFile.name}")

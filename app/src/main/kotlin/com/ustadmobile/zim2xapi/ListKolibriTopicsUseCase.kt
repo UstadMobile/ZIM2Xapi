@@ -26,13 +26,13 @@ class ListKolibriTopicsUseCase(
     ): List<Topic> {
         val rootTopic = fetchTopic(topicId, endpoints)
 
-        val allTopics = mutableListOf<Topic>()
+        val topics = mutableListOf<Topic>()
 
         rootTopic.children?.results?.forEach { child ->
-            flattenTopics(child, allTopics)
+            flattenTopics(child, topics)
         }
 
-        return allTopics
+        return topics
     }
 
     private fun displayTopicInfo(topic: Topic, depth: Int = 0) {
