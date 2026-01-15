@@ -17,6 +17,7 @@ import java.io.FileOutputStream
 import java.io.PrintWriter
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import kotlin.reflect.typeOf
 
 class CreateXapiFileUseCase(
     private val zimDumpProcess: ProcessBuilderUseCase,
@@ -77,16 +78,13 @@ class CreateXapiFileUseCase(
         )
 
         val path = zimFolder.absolutePath.toString()
-        val topic = path.split("/").last()
-        val assetResources = generateResourceLinks(zimFolder, topic)
+        val topicId = path.split("/").last()
+        val assetResources = generateResourceLinks(zimFolder, topicId)
+
+        //For testing have added this
+        val baseUrl = "http://192.168.1.7/respect-khan/${topicId}"
 
         val opdsFeedJsonFile = File(zimFolder, OPDS_JSON)
-        val navigationLinks = allTopics.map { subTopic ->
-            ReadiumLink(
-                href = "$topic/${subTopic.id}",
-                title = subTopic.title
-            )
-        }
         opdsFeedJsonFile.writeText(
             json.encodeToString(
                 OpdsFeed.serializer(), OpdsFeed(
@@ -96,39 +94,84 @@ class CreateXapiFileUseCase(
                     ),
                     links = listOf(
                         ReadiumLink(
-                            href = "$topic/$INDEX_HTML",
+                            href = "$baseUrl/$topicId",
                             title = title,
                         )
                     ),
-                    navigation = navigationLinks
+                    navigation = listOf(
+                        ReadiumLink(
+                            href = "$baseUrl/$topicId.json",
+                            title = title
+                        ),
+                    )
                 )
             )
         )
 
-        val opdsWebPublication = File(zimFolder, PUBLICATION_JSON)
-        opdsWebPublication.writeText(
+        val publicationLinks = allTopics.map { subTopic ->
+            OpdsWebPublication(
+                links = listOf(
+                    OpdsWebPublicationLink(
+                        rel = SELF_LINK,
+                        href = "$baseUrl/${subTopic.id}.json"
+                    ),
+                ),
+                context = "",
+                metadata = OpdsWebMetadata(
+                    title = subTopic.title,
+                    description = subTopic.description,
+                    identifier = subTopic.id
+                ),
+            )
+        }
+
+        val topicJsonFile = File(zimFolder, "${topicId}.json")
+        topicJsonFile.writeText(
             json.encodeToString(
-                OpdsWebPublication.serializer(), OpdsWebPublication(
-                    context = "",
-                    metadata = OpdsWebMetadata(
+                OpdsFeed.serializer(), OpdsFeed(
+                    metadata = OpdsFeedMetadata(
                         title = title,
-                        description = description,
-                        identifier = topic
+                        description = description
                     ),
                     links = listOf(
-                        OpdsWebPublicationLink(
-                            rel = SELF_LINK,
-                            href = "$topic/$INDEX_HTML"
-                        ),
-                        OpdsWebPublicationLink(
-                            rel = ACQUISITION_LINK,
-                            href = "$topic/$INDEX_HTML"
+                        ReadiumLink(
+                            href = "$baseUrl/$topicId.json",
+                            title = title,
                         )
                     ),
-                    resources = assetResources
+                    publications = publicationLinks
                 )
             )
         )
+
+        allTopics.forEach { subTopic ->
+            val subTopicJsonFile = File(zimFolder, "${subTopic.id}.json")
+            subTopicJsonFile.writeText(
+                json.encodeToString(
+                    OpdsWebPublication.serializer(),
+                    OpdsWebPublication(
+                        context = "",
+                        metadata = OpdsWebMetadata(
+                            title = subTopic.title,
+                            description = subTopic.description,
+                            identifier = subTopic.id
+                        ),
+                        links = listOf(
+                            OpdsWebPublicationLink(
+                                rel = SELF_LINK,
+                                href = "$baseUrl/${subTopic.id}"
+                            ),
+                            OpdsWebPublicationLink(
+                                rel = ACQUISITION_LINK,
+                                href = "$baseUrl/$INDEX_HTML",
+                                type = "text/html"
+                            )
+                        ),
+                        resources = assetResources
+                    )
+                )
+            )
+        }
 
 
         addXApi.invoke(zimFolder, passingGrade)
@@ -175,7 +218,6 @@ class CreateXapiFileUseCase(
 
         const val XAPI_OBJECT_JSON = "xapiobject.json"
         const val OPDS_JSON = "opds.json"
-        const val PUBLICATION_JSON = "publication.json"
 
         const val ASSESTS = "assets"
 

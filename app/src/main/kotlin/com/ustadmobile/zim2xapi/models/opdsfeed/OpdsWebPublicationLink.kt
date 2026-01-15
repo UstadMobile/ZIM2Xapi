@@ -6,4 +6,5 @@ import kotlinx.serialization.Serializable
 data class OpdsWebPublicationLink(
     val rel: String? = null,
     val href: String,
+    val type: String? = null
 )
