@@ -80,10 +80,7 @@ class CreateXapiFileUseCase(
         val path = zimFolder.absolutePath.toString()
         val topicId = path.split("/").last()
         val assetResources = generateResourceLinks(zimFolder, topicId)
-
-        //For testing have added this
-        val baseUrl = "http://192.168.1.7/respect-khan/${topicId}"
-
+        
         val opdsFeedJsonFile = File(zimFolder, OPDS_JSON)
         opdsFeedJsonFile.writeText(
             json.encodeToString(
@@ -94,13 +91,13 @@ class CreateXapiFileUseCase(
                     ),
                     links = listOf(
                         ReadiumLink(
-                            href = "$baseUrl/$topicId",
+                            href = "$topicId/$topicId",
                             title = title,
                         )
                     ),
                     navigation = listOf(
                         ReadiumLink(
-                            href = "$baseUrl/$topicId.json",
+                            href = "$topicId/$topicId.json",
                             title = title
                         ),
                     )
@@ -113,7 +110,7 @@ class CreateXapiFileUseCase(
                 links = listOf(
                     OpdsWebPublicationLink(
                         rel = SELF_LINK,
-                        href = "$baseUrl/${subTopic.id}.json"
+                        href = "$topicId/${subTopic.id}.json"
                     ),
                 ),
                 context = "",
@@ -135,7 +132,7 @@ class CreateXapiFileUseCase(
                     ),
                     links = listOf(
                         ReadiumLink(
-                            href = "$baseUrl/$topicId.json",
+                            href = "$topicId/$topicId.json",
                             title = title,
                         )
                     ),
@@ -159,11 +156,11 @@ class CreateXapiFileUseCase(
                         links = listOf(
                             OpdsWebPublicationLink(
                                 rel = SELF_LINK,
-                                href = "$baseUrl/${subTopic.id}"
+                                href = "$topicId/${subTopic.id}"
                             ),
                             OpdsWebPublicationLink(
                                 rel = ACQUISITION_LINK,
-                                href = "$baseUrl/$INDEX_HTML",
+                                href = "$topicId/$INDEX_HTML",
                                 type = "text/html"
                             )
                         ),
